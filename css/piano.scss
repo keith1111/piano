@@ -46,12 +46,21 @@ table {
   stroke : #000000;
   stroke-width: 2px;
 
-  &.white{
+  .base{
     fill: #efefef;
   }
 
-  &.black{
+  .adjacent{
     fill: #101010;
   }
 
+}
+
+.octave text{
+  text-anchor: middle;
+  font-size: 24px;
+}
+
+.octave .adjacent+text{
+  fill: white;
 }

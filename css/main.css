@@ -44,9 +44,16 @@ table {
 .piano-key {
   stroke: #000000;
   stroke-width: 2px; }
-  .piano-key.white {
+  .piano-key .base {
     fill: #efefef; }
-  .piano-key.black {
+  .piano-key .adjacent {
     fill: #101010; }
+
+.octave text {
+  text-anchor: middle;
+  font-size: 24px; }
+
+.octave .adjacent + text {
+  fill: white; }
 
 /*# sourceMappingURL=main.css.map */
