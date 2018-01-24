@@ -3,7 +3,7 @@ export function offset(){
   let keys = document.querySelector(".board");
 
   document.addEventListener("click", function(){
-    keys.style.transform = "translate(400px, 140px)";
+    keys.setAttribute("transform", `translate(0,140)`);
   });
 
   if(arguments.length){
@@ -11,13 +11,7 @@ export function offset(){
 
     return newOffset;
     }
-
-
-
-
   return +piano.getAttribute("viewBox").split(' ')[0];
-
-
 }
 
 

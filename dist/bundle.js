@@ -70,11 +70,12 @@
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__ = __webpack_require__(2);
+
 
 
 function ready(){
-  let offset = __WEBPACK_IMPORTED_MODULE_0__board_js__["a" /* offset */](100);
-  console.log(offset);
+  __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__["a" /* enableVisualClick */]();
 
 }
 
@@ -86,13 +87,13 @@ document.addEventListener('DOMContentLoaded', ready);
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = offset;
+/* unused harmony export offset */
 function offset(){
   let piano = document.querySelector(".piano");
   let keys = document.querySelector(".board");
 
   document.addEventListener("click", function(){
-    keys.style.transform = "translate(400px, 140px)";
+    keys.setAttribute("transform", `translate(0,140)`);
   });
 
   if(arguments.length){
@@ -100,17 +101,62 @@ function offset(){
 
     return newOffset;
     }
-
-
-
-
   return +piano.getAttribute("viewBox").split(' ')[0];
-
-
 }
 
 
 
+
+/***/ }),
+/* 2 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = enableVisualClick;
+function enableVisualClick(){
+
+  document.addEventListener("dragstart", ()=> false);
+
+  let pianoKeys = document.querySelectorAll(".piano-key");
+  pianoKeys.forEach(key=> key.addEventListener("mousedown", playKey));
+  pianoKeys.forEach(key=> key.addEventListener("mouseup", stopKey));
+  pianoKeys.forEach(key=> key.addEventListener("mouseout", stopKey));
+  pianoKeys.forEach(key=> key.addEventListener("mouseenter", slideToKey));
+
+  function playKey(){
+    this.dataset.isPressed = true;
+
+  }
+
+  function stopKey(){
+    this.dataset.isPressed = false;
+
+  }
+
+  function slideToKey(e){
+
+    if(e.buttons & 1){
+      playKey.call(e.target);
+    }
+  }
+
+  const TONE_VISUAL_OFFSET = {
+    1:0,
+    2:55,
+    3:70,
+    4:125,
+    5:140,
+    6:210,
+    7:265,
+    8:280,
+    9:335,
+    10:350,
+    11:405,
+    12:420
+  };
+
+
+}
 
 /***/ })
 /******/ ]);

@@ -16,9 +16,13 @@
 <body>
 
 <!--  first viewbox param is x-offset 1470 default-->
-<svg class="piano" xmlns="http://www.w3.org/2000/svg"  xmlns:xlink="http://www.w3.org/1999/xlink" width="980" height="516" viewBox="1470 0 980 516">
-
-  <g class="board" transform="translate(0,140)">
+<svg class="piano" xmlns="http://www.w3.org/2000/svg"  xmlns:xlink="http://www.w3.org/1999/xlink" width="980" height="516" viewBox="0 0 980 516">
+<g class="hull">
+  <rect x="0" y="0" width="980" height="516"></rect>
+  <text x="20" y="20">RoboMusic</text>
+</g>
+  <g class="board" transform="translate(-1470,140)">
+  <svg width="3430" height="376">
     <g class="octave" data-oct="-2" style="transform: translateX(0)">
       <g class="piano-key" data-tone="1">
         <polygon class="base" points="0 0 0 376 70 376 70 270 55 270 55 0 0 0"></polygon>
@@ -30,6 +34,7 @@
       </g>
       <g class="piano-key" data-tone="3" transform="translate(70,0)">
         <polygon class="base" points="15 0 15 270 0 270 0 376 70 376 70 270 55 270 55 140 55 0 15 0"></polygon>
+
         <text x="35" y="350"></text>
       </g>
       <g class="piano-key" data-tone="4" transform="translate(125,0)">
@@ -183,6 +188,8 @@
       </g>
       <g class="piano-key" data-tone="3" transform="translate(70,0)">
         <polygon class="base" points="15 0 15 270 0 270 0 376 70 376 70 270 55 270 55 140 55 0 15 0"></polygon>
+        <polygon class="prev-pressed" points="-17 2 -17 272 -15 272 -15 2 -17 2"></polygon>
+        <polygon class="next-pressed" points="17 0 17 272 0 272 0 2 17 0"></polygon>
         <text x="35" y="350"></text>
       </g>
       <g class="piano-key" data-tone="4" transform="translate(125,0)">
@@ -191,6 +198,8 @@
       </g>
       <g class="piano-key" data-tone="5" transform="translate(140,0)">
         <polygon class="base" points="15 0 15 270 0 270 0 376 70 376 70 0 15 0"></polygon>
+        <polygon class="prev-pressed" points="-17 2 -17 272 -15 272 -15 2 -17 2"></polygon>
+        <polygon class="next-pressed" points="17 0 17 272 0 272 0 2 17 0"></polygon>
         <text x="35" y="350"></text>
       </g>
       <g class="piano-key" data-tone="6" transform="translate(210,0)">
@@ -203,6 +212,8 @@
       </g>
       <g class="piano-key" data-tone="8" transform="translate(280,0)">
         <polygon class="base" points="15 0 15 270 0 270 0 376 70 376 70 270 55 270 55 140 55 0 15 0"></polygon>
+        <polygon class="prev-pressed" points="-17 2 -17 272 -15 272 -15 2 -17 2"></polygon>
+        <polygon class="next-pressed" points="17 0 17 272 0 272 0 2 17 0"></polygon>
         <text x="35" y="350"></text>
       </g>
       <g class="piano-key" data-tone="9" transform="translate(335,0)">
@@ -211,6 +222,8 @@
       </g>
       <g class="piano-key" data-tone="10" transform="translate(350,0)">
         <polygon class="base" points="15 0 15 270 0 270 0 376 70 376 70 270 55 270 55 140 55 0 15 0"></polygon>
+        <polygon class="prev-pressed" points="-17 2 -17 272 -15 272 -15 2 -17 2"></polygon>
+        <polygon class="next-pressed" points="17 0 17 272 0 272 0 2 17 0"></polygon>
         <text x="35" y="350"></text>
       </g>
       <g class="piano-key" data-tone="11" transform="translate(405,0)">
@@ -219,6 +232,8 @@
       </g>
       <g class="piano-key" data-tone="12" transform="translate(420,0)">
         <polygon class="base" points="15 0 15 270 0 270 0 376 70 376 70 0 15 0"></polygon>
+        <polygon class="prev-pressed" points="-17 2 -17 272 -15 272 -15 2 -17 2"></polygon>
+        <polygon class="next-pressed" points="17 0 17 272 0 272 0 2 17 0"></polygon>
         <text x="35" y="350"></text>
       </g>
 
@@ -376,7 +391,8 @@
       </g>
 
     </g>
-  </g>
+  </svg>
+    </g>
 </svg>
 
 

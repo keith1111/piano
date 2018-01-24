@@ -42,8 +42,35 @@ table {
   border-spacing: 0;
 }
 
+body{
+  padding-top: 100px;
+}
+
 .piano{
-  transition: 1s;
+  width: 70vw;
+  height: 36.857142vw;
+  margin-left: 15vw;
+
+}
+
+.hull {
+  rect {
+    fill: #27274f;
+  }
+
+  text{
+    fill: #dfdfdd;
+  }
+}
+.board{
+
+  transition: 2s;
+
+  svg{
+    width:245vw;
+    height: 26.857142vw;
+
+  }
 }
 
 .piano-key{
@@ -58,15 +85,31 @@ table {
     fill: #101010;
   }
 
-}
-
-.board{
-  transition: 2s;
-
-  &.open{
-    transform:translateX(600px);
+  .next-pressed, .prev-pressed{
+    fill: transparent;
+    stroke:transparent;
+    pointer-events:none;
   }
+
+  &[data-is-pressed=true] polygon{
+    transform: translate(2px,2px);
+  }
+
+  &[data-is-pressed=true] + .piano-key .next-pressed{
+    fill: #101010;
+    stroke: #101010;
+
+  }
+
+  &[data-is-pressed=true] + .piano-key .prev-pressed{
+    fill: #efefef;
+    stroke: #efefef;
+
+  }
+
 }
+
+
 
 .octave text{
   text-anchor: middle;

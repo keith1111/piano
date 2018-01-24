@@ -1,8 +1,8 @@
 import * as board from './board.js';
+import * as keyPressVisual from './keypress-visual.js';
 
 function ready(){
-  let offset = board.offset(100);
-  console.log(offset);
+  keyPressVisual.enableVisualClick();
 
 }
 
