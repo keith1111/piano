@@ -1,3 +1,8 @@
+@font-face{
+  font-family: "Drive-Thru";
+  src: url("../fonts/Drive-ThruNF.ttf");
+}
+
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -59,8 +64,10 @@ body{
     fill: #27274f;
   }
 
-  text{
+  .logo{
     fill: #dfdfdd;
+    font-family: Drive-Thru, cursive;
+    font-size: 1.5rem;
   }
 }
 .board{
