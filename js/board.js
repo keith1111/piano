@@ -13,7 +13,7 @@ export function enableOctaveChange(){
   }
 }
 
-function offset(){
+export function offset(){
   let keys = document.querySelector(".board");
 
   if(arguments.length){

@@ -71,12 +71,15 @@
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__keymap_js__ = __webpack_require__(3);
+
 
 
 
 function ready(){
   __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__["a" /* enableVisualClick */]();
   __WEBPACK_IMPORTED_MODULE_0__board_js__["a" /* enableOctaveChange */]();
+  __WEBPACK_IMPORTED_MODULE_2__keymap_js__["a" /* signKeys */]();
 
 }
 
@@ -89,6 +92,7 @@ document.addEventListener('DOMContentLoaded', ready);
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = enableOctaveChange;
+/* harmony export (immutable) */ __webpack_exports__["b"] = offset;
 function enableOctaveChange(){
 
 
@@ -183,6 +187,43 @@ function enableVisualClick() {
 }
 
 
+
+/***/ }),
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = signKeys;
+/* unused harmony export updateKeysSigns */
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(1);
+
+
+function signKeys(){
+  updateKeysSigns();
+
+
+}
+
+let TEXT_SIGNS = {
+  current: [-1, "Z","S", "X","D","C", "V","G", "B","H", "N","J", "M"],
+  next: [-1, "Y","7","U","8","I","o","0","P","-","[" ,"=","]"]
+};
+
+function updateKeysSigns(){
+  let keys = document.querySelectorAll(".piano-key");
+  let OCT_WIDTH = -490;
+  let currentOffset = Object(__WEBPACK_IMPORTED_MODULE_0__board_js__["b" /* offset */])();
+  let currentOct = currentOffset/OCT_WIDTH - 2;
+  console.log(currentOct);
+  keys.forEach( function(key){
+    let keyOct = key.parentElement.dataset.oct;
+    if( keyOct < currentOct || keyOct > currentOct+1){
+      return;
+    }
+    let tone = key.dataset.tone;
+    key.querySelector('text').textContent = (keyOct == currentOct) ? TEXT_SIGNS.current[tone] : TEXT_SIGNS.next[tone];
+  });
+}
 
 /***/ })
 /******/ ]);

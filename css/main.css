@@ -91,6 +91,7 @@ body {
   font-size: 24px; }
 
 .octave .adjacent + text {
-  fill: white; }
+  fill: #dfdfdf;
+  stroke: #dfdfdf; }
 
 /*# sourceMappingURL=main.css.map */

@@ -91,6 +91,7 @@ body{
 
   .adjacent{
     fill: #101010;
+
   }
 
   .next-pressed, .prev-pressed{
@@ -125,5 +126,6 @@ body{
 }
 
 .octave .adjacent+text{
-  fill: white;
+  fill: #dfdfdf;
+  stroke: #dfdfdf;
 }
