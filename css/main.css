@@ -42,7 +42,8 @@ table {
   border-spacing: 0; }
 
 body {
-  padding-top: 100px; }
+  padding-top: 100px;
+  user-select: none; }
 
 .piano {
   width: 70vw;
@@ -55,7 +56,7 @@ body {
   fill: #dfdfdd; }
 
 .board {
-  transition: 2s; }
+  transition: .6s; }
   .board svg {
     width: 245vw;
     height: 26.857142vw; }

@@ -76,6 +76,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 function ready(){
   __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__["a" /* enableVisualClick */]();
+  __WEBPACK_IMPORTED_MODULE_0__board_js__["a" /* enableOctaveChange */]();
 
 }
 
@@ -87,25 +88,50 @@ document.addEventListener('DOMContentLoaded', ready);
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* unused harmony export offset */
-function offset(){
-  let piano = document.querySelector(".piano");
-  let keys = document.querySelector(".board");
+/* harmony export (immutable) */ __webpack_exports__["a"] = enableOctaveChange;
+function enableOctaveChange(){
 
-  document.addEventListener("click", function(){
-    keys.setAttribute("transform", `translate(0,140)`);
-  });
+
+  document.addEventListener("keydown", moveBoard);
+
+  function moveBoard(e){
+    if(e.keyCode == 33){
+      octaveMove(-1);
+
+    }else if(e.keyCode==34){
+      octaveMove(1);
+    }
+  }
+}
+
+function offset(){
+  let keys = document.querySelector(".board");
 
   if(arguments.length){
     let newOffset = arguments[0];
-
+    keys.setAttribute("transform", `translate(${newOffset},140)`);
     return newOffset;
-    }
-  return +piano.getAttribute("viewBox").split(' ')[0];
+  }
+  return offsetFromAttr(keys.getAttribute("transform"));
 }
 
+function offsetFromAttr(transform){
+  let pos = transform.indexOf('(');
+  let trimmedAttr = transform.slice(pos+1);
+  return parseInt(trimmedAttr);
+}
 
+function octaveMove(change){
+  let OCT_WIDTH = -490;
+  let currentOffset = offset();
+  let currentOct = currentOffset/OCT_WIDTH - 2;
 
+  if(change == 1 && currentOct < 3){
+    offset( currentOffset +=OCT_WIDTH );
+  } else if( change == -1 && currentOct > -2){
+    offset( currentOffset -=OCT_WIDTH );
+  }
+}
 
 /***/ }),
 /* 2 */
@@ -113,9 +139,9 @@ function offset(){
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = enableVisualClick;
-function enableVisualClick(){
+function enableVisualClick() {
 
-  document.addEventListener("dragstart", ()=> false);
+  //document.addEventListener("dragstart", ()=> false);
 
   let pianoKeys = document.querySelectorAll(".piano-key");
   pianoKeys.forEach(key=> key.addEventListener("mousedown", playKey));
@@ -123,40 +149,40 @@ function enableVisualClick(){
   pianoKeys.forEach(key=> key.addEventListener("mouseout", stopKey));
   pianoKeys.forEach(key=> key.addEventListener("mouseenter", slideToKey));
 
-  function playKey(){
+  function playKey() {
     this.dataset.isPressed = true;
 
   }
 
-  function stopKey(){
+  function stopKey() {
     this.dataset.isPressed = false;
 
   }
 
-  function slideToKey(e){
+  function slideToKey(e) {
 
-    if(e.buttons & 1){
+    if (e.buttons & 1) {
       playKey.call(e.target);
     }
   }
 
   const TONE_VISUAL_OFFSET = {
-    1:0,
-    2:55,
-    3:70,
-    4:125,
-    5:140,
-    6:210,
-    7:265,
-    8:280,
-    9:335,
-    10:350,
-    11:405,
-    12:420
+    1: 0,
+    2: 55,
+    3: 70,
+    4: 125,
+    5: 140,
+    6: 210,
+    7: 265,
+    8: 280,
+    9: 335,
+    10: 350,
+    11: 405,
+    12: 420
   };
-
-
 }
+
+
 
 /***/ })
 /******/ ]);

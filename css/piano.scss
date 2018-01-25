@@ -44,6 +44,7 @@ table {
 
 body{
   padding-top: 100px;
+  user-select: none;
 }
 
 .piano{
@@ -64,7 +65,7 @@ body{
 }
 .board{
 
-  transition: 2s;
+  transition: .6s;
 
   svg{
     width:245vw;
