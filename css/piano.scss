@@ -100,8 +100,11 @@ body{
     pointer-events:none;
   }
 
-  &[data-is-pressed=true] polygon{
+  &[data-is-pressed=true]{
+
+    polygon,text{
     transform: translate(2px,2px);
+    }
   }
 
   &[data-is-pressed=true] + .piano-key .next-pressed{
@@ -123,6 +126,7 @@ body{
 .octave text{
   text-anchor: middle;
   font-size: 24px;
+  font-family: 'Cutive Mono', monospace;
 }
 
 .octave .adjacent+text{

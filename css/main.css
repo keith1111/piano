@@ -77,7 +77,7 @@ body {
     fill: transparent;
     stroke: transparent;
     pointer-events: none; }
-  .piano-key[data-is-pressed=true] polygon {
+  .piano-key[data-is-pressed=true] polygon, .piano-key[data-is-pressed=true] text {
     transform: translate(2px, 2px); }
   .piano-key[data-is-pressed=true] + .piano-key .next-pressed {
     fill: #101010;
@@ -88,7 +88,8 @@ body {
 
 .octave text {
   text-anchor: middle;
-  font-size: 24px; }
+  font-size: 24px;
+  font-family: 'Cutive Mono', monospace; }
 
 .octave .adjacent + text {
   fill: #dfdfdf;

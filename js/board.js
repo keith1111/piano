@@ -1,3 +1,5 @@
+import {updateKeysSigns} from './keymap.js';
+
 export function enableOctaveChange(){
 
 
@@ -6,9 +8,11 @@ export function enableOctaveChange(){
   function moveBoard(e){
     if(e.keyCode == 33){
       octaveMove(-1);
+      updateKeysSigns();
 
     }else if(e.keyCode==34){
       octaveMove(1);
+      updateKeysSigns();
     }
   }
 }

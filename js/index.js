@@ -6,6 +6,7 @@ function ready(){
   keyPressVisual.enableVisualClick();
   board.enableOctaveChange();
   keyMap.signKeys();
+  keyPressVisual.enableKeyboardPress();
 
 }
 

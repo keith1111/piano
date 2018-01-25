@@ -16,7 +16,6 @@ export function updateKeysSigns(){
   let OCT_WIDTH = -490;
   let currentOffset = offset();
   let currentOct = currentOffset/OCT_WIDTH - 2;
-  console.log(currentOct);
   keys.forEach( function(key){
     let keyOct = key.parentElement.dataset.oct;
     if( keyOct < currentOct || keyOct > currentOct+1){
