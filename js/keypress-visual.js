@@ -70,7 +70,7 @@ let activatedKeys = {
 };
 
 function playKey(e) {
-  if(e && isPressedOnKeyboard(this)){
+  if(e && (isPressedOnKeyboard(this) || e.type=="mouseenter" && !(e.buttons & 1)) ){
     return;
   };
   this.dataset.isPressed = true;
@@ -82,17 +82,13 @@ function stopKey(e) {
   if(e && isPressedOnKeyboard(this)){
     return;
   };
-  this.dataset.isPressed = false;
-  sound.soundStop(this);
-}
 
-function slideToKey(e) {
-  if(e && isPressedOnKeyboard(this)){
+  this.dataset.isPressed = false;
+
+  if(e && !(e.buttons & 1)){
     return;
-  };
-  if (e.buttons & 1) {
-    playKey.call(e.target);
   }
+  sound.soundStop(this);
 }
 
 function isPressedOnKeyboard(key){
@@ -115,7 +111,7 @@ export function enableVisualClick() {
   pianoKeys.forEach(key=> key.addEventListener("mousedown", playKey));
   pianoKeys.forEach(key=> key.addEventListener("mouseup", stopKey));
   pianoKeys.forEach(key=> key.addEventListener("mouseout", stopKey));
-  pianoKeys.forEach(key=> key.addEventListener("mouseenter", slideToKey));
+  pianoKeys.forEach(key=> key.addEventListener("mouseenter", playKey));
 
 
 

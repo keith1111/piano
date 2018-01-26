@@ -4,6 +4,10 @@ let ctx = new AudioContext();
 let buffer = {};   // buffer.metronome etc
 let source ,destination ;
 let osc = {};  //for 84 keys
+let gainNode = {};
+destination = ctx.destination;
+
+
 
 export function initMetronome(){
   loadSample("metronome.mp3", "metronome");
@@ -24,15 +28,35 @@ function loadSample(filename, bufferProp){
   req.send();
 }
 
+function generateSound(keyNumber){
+
+  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
+  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
+
+  osc[keyNumber] = ctx.createOscillator();
+  osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
+
+  gainNode[keyNumber] = ctx.createGain();
+  osc[keyNumber].connect(gainNode[keyNumber]);
+
+  gainNode[keyNumber].connect(destination);
+  gainNode[keyNumber].gain.setValueAtTime(.4,ctx.currentTime);
+  gainNode[keyNumber].gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
+
+
+  osc[keyNumber].start(0);
+  console.log(keyNumber);
+}
+
 export function soundPlay(key){
   source = ctx.createBufferSource();
   source.buffer = buffer.metronome;
-  destination = ctx.destination;
+
 
 
  // let gainNode =  ctx.createGain();
   //let delayNode = ctx.createDelay();
-  //gainNode.gain.setValueAtTime(.21,0);
+
 
   //delayNode.delayTime.setValueAtTime(.5,0);
   //let convolverNode = ctx.createConvolver();   //impulse response
@@ -69,13 +93,15 @@ export function soundPlay(key){
   let keyTone = +key.dataset.tone;
   let oct = +key.parentElement.dataset.oct+2;
   let keyNumber = oct*12+keyTone;
-  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
-  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
 
-  osc[keyNumber] = ctx.createOscillator();
-  osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
-  osc[keyNumber].connect(destination);
-  osc[keyNumber].start(0);
+
+  generateSound(keyNumber);
+
+
+
+
+
+
   //source.stop(now+1);
 
   //console.log(toneHz);
@@ -90,6 +116,6 @@ export function soundStop(key){
   if(!osc[keyNumber]){
     return;
   }
-  osc[keyNumber].stop(0);
-  //console.log("stop " + keyNumber);
+  osc[keyNumber].stop(ctx.currentTime+2);
+
 }

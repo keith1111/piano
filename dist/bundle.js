@@ -264,7 +264,7 @@ let activatedKeys = {
 };
 
 function playKey(e) {
-  if(e && isPressedOnKeyboard(this)){
+  if(e && (isPressedOnKeyboard(this) || e.type=="mouseenter" && !(e.buttons & 1)) ){
     return;
   };
   this.dataset.isPressed = true;
@@ -276,17 +276,13 @@ function stopKey(e) {
   if(e && isPressedOnKeyboard(this)){
     return;
   };
-  this.dataset.isPressed = false;
-  __WEBPACK_IMPORTED_MODULE_1__sound_js__["c" /* soundStop */](this);
-}
 
-function slideToKey(e) {
-  if(e && isPressedOnKeyboard(this)){
+  this.dataset.isPressed = false;
+
+  if(e && !(e.buttons & 1)){
     return;
-  };
-  if (e.buttons & 1) {
-    playKey.call(e.target);
   }
+  __WEBPACK_IMPORTED_MODULE_1__sound_js__["c" /* soundStop */](this);
 }
 
 function isPressedOnKeyboard(key){
@@ -309,7 +305,7 @@ function enableVisualClick() {
   pianoKeys.forEach(key=> key.addEventListener("mousedown", playKey));
   pianoKeys.forEach(key=> key.addEventListener("mouseup", stopKey));
   pianoKeys.forEach(key=> key.addEventListener("mouseout", stopKey));
-  pianoKeys.forEach(key=> key.addEventListener("mouseenter", slideToKey));
+  pianoKeys.forEach(key=> key.addEventListener("mouseenter", playKey));
 
 
 
@@ -373,6 +369,10 @@ let ctx = new AudioContext();
 let buffer = {};   // buffer.metronome etc
 let source ,destination ;
 let osc = {};  //for 84 keys
+let gainNode = {};
+destination = ctx.destination;
+
+
 
 function initMetronome(){
   loadSample("metronome.mp3", "metronome");
@@ -393,15 +393,35 @@ function loadSample(filename, bufferProp){
   req.send();
 }
 
+function generateSound(keyNumber){
+
+  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
+  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
+
+  osc[keyNumber] = ctx.createOscillator();
+  osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
+
+  gainNode[keyNumber] = ctx.createGain();
+  osc[keyNumber].connect(gainNode[keyNumber]);
+
+  gainNode[keyNumber].connect(destination);
+  gainNode[keyNumber].gain.setValueAtTime(.4,ctx.currentTime);
+  gainNode[keyNumber].gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
+
+
+  osc[keyNumber].start(0);
+  console.log(keyNumber);
+}
+
 function soundPlay(key){
   source = ctx.createBufferSource();
   source.buffer = buffer.metronome;
-  destination = ctx.destination;
+
 
 
  // let gainNode =  ctx.createGain();
   //let delayNode = ctx.createDelay();
-  //gainNode.gain.setValueAtTime(.21,0);
+
 
   //delayNode.delayTime.setValueAtTime(.5,0);
   //let convolverNode = ctx.createConvolver();   //impulse response
@@ -438,13 +458,15 @@ function soundPlay(key){
   let keyTone = +key.dataset.tone;
   let oct = +key.parentElement.dataset.oct+2;
   let keyNumber = oct*12+keyTone;
-  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
-  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
 
-  osc[keyNumber] = ctx.createOscillator();
-  osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
-  osc[keyNumber].connect(destination);
-  osc[keyNumber].start(0);
+
+  generateSound(keyNumber);
+
+
+
+
+
+
   //source.stop(now+1);
 
   //console.log(toneHz);
@@ -459,8 +481,8 @@ function soundStop(key){
   if(!osc[keyNumber]){
     return;
   }
-  osc[keyNumber].stop(0);
-  //console.log("stop " + keyNumber);
+  osc[keyNumber].stop(ctx.currentTime+2);
+
 }
 
 /***/ })
