@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 2);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -68,33 +68,9 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__ = __webpack_require__(2);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__keymap_js__ = __webpack_require__(3);
-
-
-
-
-function ready(){
-  __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__["b" /* enableVisualClick */]();
-  __WEBPACK_IMPORTED_MODULE_0__board_js__["a" /* enableOctaveChange */]();
-  __WEBPACK_IMPORTED_MODULE_2__keymap_js__["a" /* signKeys */]();
-  __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__["a" /* enableKeyboardPress */]();
-
-}
-
-document.addEventListener('DOMContentLoaded', ready);
-
-
-/***/ }),
-/* 1 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = enableOctaveChange;
 /* harmony export (immutable) */ __webpack_exports__["b"] = offset;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__keymap_js__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__keymap_js__ = __webpack_require__(1);
 
 
 function enableOctaveChange(){
@@ -144,13 +120,79 @@ function octaveMove(change){
 }
 
 /***/ }),
+/* 1 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = signKeys;
+/* harmony export (immutable) */ __webpack_exports__["b"] = updateKeysSigns;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(0);
+
+
+function signKeys(){
+  updateKeysSigns();
+
+
+}
+
+let TEXT_SIGNS = {
+  current: [-1, "Z","S", "X","D","C", "V","G", "B","H", "N","J", "M"],
+  next: [-1, "Y","7","U","8","I","o","0","P","-","[" ,"=","]"]
+};
+
+function updateKeysSigns(){
+  let keys = document.querySelectorAll(".piano-key");
+  let OCT_WIDTH = -490;
+  let currentOffset = Object(__WEBPACK_IMPORTED_MODULE_0__board_js__["b" /* offset */])();
+  let currentOct = currentOffset/OCT_WIDTH - 2;
+  keys.forEach( function(key){
+    let keyOct = key.parentElement.dataset.oct;
+    if( keyOct < currentOct || keyOct > currentOct+1){
+      return;
+    }
+    let tone = key.dataset.tone;
+    key.querySelector('text').textContent = (keyOct == currentOct) ? TEXT_SIGNS.current[tone] : TEXT_SIGNS.next[tone];
+  });
+}
+
+/***/ }),
 /* 2 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__keymap_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sound_js__ = __webpack_require__(4);
+
+
+
+
+
+function ready(){
+  __WEBPACK_IMPORTED_MODULE_3__sound_js__["a" /* initMetronome */]();
+  __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__["b" /* enableVisualClick */]();
+  __WEBPACK_IMPORTED_MODULE_0__board_js__["a" /* enableOctaveChange */]();
+  __WEBPACK_IMPORTED_MODULE_2__keymap_js__["a" /* signKeys */]();
+  __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__["a" /* enableKeyboardPress */]();
+
+
+}
+
+document.addEventListener('DOMContentLoaded', ready);
+
+
+/***/ }),
+/* 3 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["b"] = enableVisualClick;
 /* harmony export (immutable) */ __webpack_exports__["a"] = enableKeyboardPress;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__sound_js__ = __webpack_require__(4);
+
 
 
 const TONE_VISUAL_OFFSET = {
@@ -226,6 +268,7 @@ function playKey(e) {
     return;
   };
   this.dataset.isPressed = true;
+  __WEBPACK_IMPORTED_MODULE_1__sound_js__["b" /* soundPlay */](this);
 
 }
 
@@ -234,7 +277,7 @@ function stopKey(e) {
     return;
   };
   this.dataset.isPressed = false;
-
+  __WEBPACK_IMPORTED_MODULE_1__sound_js__["c" /* soundStop */](this);
 }
 
 function slideToKey(e) {
@@ -317,39 +360,107 @@ function enableKeyboardPress(){
 
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = signKeys;
-/* harmony export (immutable) */ __webpack_exports__["b"] = updateKeysSigns;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(1);
+/* harmony export (immutable) */ __webpack_exports__["a"] = initMetronome;
+/* harmony export (immutable) */ __webpack_exports__["b"] = soundPlay;
+/* harmony export (immutable) */ __webpack_exports__["c"] = soundStop;
+let STD_TUNING = 440;    // tuning A 1-st oct  std == 440Hz
+let STD_KEYNUMBER_A = 46; // place of A-note 1-st oct on piano board
+let ctx = new AudioContext();
+let buffer = {};   // buffer.metronome etc
+let source ,destination ;
+let osc = {};  //for 84 keys
 
-
-function signKeys(){
-  updateKeysSigns();
-
-
+function initMetronome(){
+  loadSample("metronome.mp3", "metronome");
 }
 
-let TEXT_SIGNS = {
-  current: [-1, "Z","S", "X","D","C", "V","G", "B","H", "N","J", "M"],
-  next: [-1, "Y","7","U","8","I","o","0","P","-","[" ,"=","]"]
-};
+function loadSample(filename, bufferProp){
+  let req = new XMLHttpRequest();
+  req.open('GET', `./sample/${filename}`, true);
+  req.responseType = 'arraybuffer';
+  req.onload = function(e) {
+     ctx.decodeAudioData(this.response,function(decodedArrayBuffer) {
+        buffer[bufferProp] = decodedArrayBuffer;
 
-function updateKeysSigns(){
-  let keys = document.querySelectorAll(".piano-key");
-  let OCT_WIDTH = -490;
-  let currentOffset = Object(__WEBPACK_IMPORTED_MODULE_0__board_js__["b" /* offset */])();
-  let currentOct = currentOffset/OCT_WIDTH - 2;
-  keys.forEach( function(key){
-    let keyOct = key.parentElement.dataset.oct;
-    if( keyOct < currentOct || keyOct > currentOct+1){
-      return;
-    }
-    let tone = key.dataset.tone;
-    key.querySelector('text').textContent = (keyOct == currentOct) ? TEXT_SIGNS.current[tone] : TEXT_SIGNS.next[tone];
-  });
+        }, function(e) {
+        console.log('Error decoding file', e);
+        });
+  };
+  req.send();
+}
+
+function soundPlay(key){
+  source = ctx.createBufferSource();
+  source.buffer = buffer.metronome;
+  destination = ctx.destination;
+
+
+ // let gainNode =  ctx.createGain();
+  //let delayNode = ctx.createDelay();
+  //gainNode.gain.setValueAtTime(.21,0);
+
+  //delayNode.delayTime.setValueAtTime(.5,0);
+  //let convolverNode = ctx.createConvolver();   //impulse response
+
+  //let filterNode = ctx.createBiquadFilter();
+  //filterNode.type = "peaking";
+  //filterNode.frequency.setValueAtTime(64,0);
+  //filterNode.Q.setValueAtTime(10,0);
+  //filterNode.gain.setValueAtTime(35,0);
+  //console.log(filterNode);
+
+
+//  var analyser = context.createAnalyser();
+//// ����������� �������������� �����
+//// ���� �� ���������, ��� ��� ����� - ������� 512, 1024 ��� 2048 ;)
+//  analyser.fftSize = 2048;
+//// ������� ������� ��� �������� ������
+//  fFrequencyData = new Float32Array(analyser.frequencyBinCount);
+//  bFrequencyData = new Uint8Array(analyser.frequencyBinCount);
+//  bTimeData = new Uint8Array(analyser.frequencyBinCount);
+//// �������� ������
+//  analyser.getFloatFrequencyData(fFrequencyData);
+//  analyser.getByteFrequencyData(bFrequencyData);
+//  analyser.getByteTimeDomainData(bTimeData);
+//// ������ � ��� ���� ������� fFrequencyData, bFrequencyData, bTimeData, � �������� ����� ������ ���, ��� ����������
+
+
+  //source.connect(filterNode);
+
+  //filterNode.connect(destination);
+
+  //let now = ctx.currentTime;
+  //source.start(0);
+  let keyTone = +key.dataset.tone;
+  let oct = +key.parentElement.dataset.oct+2;
+  let keyNumber = oct*12+keyTone;
+  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
+  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
+
+  osc[keyNumber] = ctx.createOscillator();
+  osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
+  osc[keyNumber].connect(destination);
+  osc[keyNumber].start(0);
+  //source.stop(now+1);
+
+  //console.log(toneHz);
+}
+
+function soundStop(key){
+ // let cur = ctx.currentTime;
+  let keyTone = +key.dataset.tone;
+  let oct = +key.parentElement.dataset.oct+2;
+  let keyNumber = oct*12+keyTone;
+  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
+  if(!osc[keyNumber]){
+    return;
+  }
+  osc[keyNumber].stop(0);
+  //console.log("stop " + keyNumber);
 }
 
 /***/ })

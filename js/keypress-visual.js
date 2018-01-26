@@ -1,4 +1,5 @@
 import {offset} from './board.js';
+import * as sound from './sound.js';
 
 const TONE_VISUAL_OFFSET = {
   1: 0,
@@ -73,6 +74,7 @@ function playKey(e) {
     return;
   };
   this.dataset.isPressed = true;
+  sound.soundPlay(this);
 
 }
 
@@ -81,7 +83,7 @@ function stopKey(e) {
     return;
   };
   this.dataset.isPressed = false;
-
+  sound.soundStop(this);
 }
 
 function slideToKey(e) {
