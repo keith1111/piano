@@ -1,6 +1,6 @@
 let STD_TUNING = 440;    // tuning A 1-st oct  std == 440Hz
 let STD_KEYNUMBER_A = 46; // place of A-note 1-st oct on piano board
-let SUSTAIN_TIME = 1.5;
+let SUSTAIN_TIME = 2;
 
 let ctx = new AudioContext();
 let buffer = {};   // buffer.metronome etc
@@ -10,7 +10,46 @@ let gainNode = {};
 let startedSustain = {};
 destination = ctx.destination;
 
+//let overtones = [0, .891, 1, .631, .282, .501, .224, .200, .100, .708, .447];
 
+let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100];
+let real = [];
+let imag = [];
+for(let i=0;i<overtones.length;i++){
+  real[i] = overtones[i];
+  imag[i] = 0;
+}
+let pianoTable = ctx.createPeriodicWave(real, imag);
+
+let filterNode = ctx.createGain();
+filterNode.gain.setValueAtTime(1,0);
+
+let filter2 = ctx.createBiquadFilter();
+filter2.type = 'highshelf';
+filter2.Q.setValueAtTime(.05,0);
+filter2.frequency.setValueAtTime(7000,0);
+filter2.gain.setValueAtTime(-45,0);
+
+let filter3 = ctx.createBiquadFilter();
+filter3.type = 'highshelf';
+filter3.Q.setValueAtTime(.05,0);
+filter3.frequency.setValueAtTime(10000,0);
+filter3.gain.setValueAtTime(-70,0);
+
+let compressor = ctx.createDynamicsCompressor();
+
+compressor.attack.setValueAtTime(.1,0);
+compressor.knee.setValueAtTime(12,0);
+compressor.ratio.setValueAtTime(15,0);
+compressor.release.setValueAtTime(1,0);
+
+console.log(compressor);
+
+
+filterNode.connect(filter2);
+filterNode.connect(filter3);
+filter3.connect(compressor);
+compressor.connect(destination);
 
 export function initMetronome(){
   loadSample("metronome.mp3", "metronome");
@@ -48,12 +87,14 @@ function generateSound(keyNumber){
 
   osc[keyNumber] = ctx.createOscillator();
   osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
+  osc[keyNumber].setPeriodicWave(pianoTable);
+
   osc[keyNumber].onended = testEnded;
   osc[keyNumber].keyNumber = keyNumber;
 
   gainNode[keyNumber] = ctx.createGain();
   gainNode[keyNumber].gain.setValueAtTime(1,0);
-  gainNode[keyNumber].connect(destination);
+  gainNode[keyNumber].connect(filterNode);
 
   osc[keyNumber].connect(gainNode[keyNumber]);
   gainNode[keyNumber].gain.linearRampToValueAtTime(0, ctx.currentTime + SUSTAIN_TIME);
@@ -90,7 +131,7 @@ export function soundStop(key){
 
   startedSustain[keyNumber] = ctx.currentTime;
   osc[keyNumber].stop(ctx.currentTime+SUSTAIN_TIME);
-  console.log("stop");
+
 
 }
 
@@ -103,12 +144,7 @@ export function soundStop(key){
 //delayNode.delayTime.setValueAtTime(.5,0);
 //let convolverNode = ctx.createConvolver();   //impulse response
 
-//let filterNode = ctx.createBiquadFilter();
-//filterNode.type = "peaking";
-//filterNode.frequency.setValueAtTime(64,0);
-//filterNode.Q.setValueAtTime(10,0);
-//filterNode.gain.setValueAtTime(35,0);
-//console.log(filterNode);
+
 
 
 //  var analyser = context.createAnalyser();
