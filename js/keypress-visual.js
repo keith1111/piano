@@ -79,13 +79,14 @@ function playKey(e) {
 }
 
 function stopKey(e) {
+
   if(e && isPressedOnKeyboard(this)){
     return;
   };
 
   this.dataset.isPressed = false;
 
-  if(e && !(e.buttons & 1)){
+  if(e && e.type=="mouseout" && !(e.buttons & 1)){
     return;
   }
   sound.soundStop(this);

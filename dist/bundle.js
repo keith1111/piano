@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 2);
+/******/ 	return __webpack_require__(__webpack_require__.s = 3);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -160,11 +160,154 @@ function updateKeysSigns(){
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = initMetronome;
+/* harmony export (immutable) */ __webpack_exports__["b"] = soundPlay;
+/* harmony export (immutable) */ __webpack_exports__["c"] = soundStop;
+let STD_TUNING = 440;    // tuning A 1-st oct  std == 440Hz
+let STD_KEYNUMBER_A = 46; // place of A-note 1-st oct on piano board
+let SUSTAIN_TIME = 1.5;
+
+let ctx = new AudioContext();
+let buffer = {};   // buffer.metronome etc
+let source ,destination ;
+let osc = {};  //for 84 keys
+let gainNode = {};
+let startedSustain = {};
+destination = ctx.destination;
+
+
+
+function initMetronome(){
+  loadSample("metronome.mp3", "metronome");
+}
+
+function loadSample(filename, bufferProp){
+  let req = new XMLHttpRequest();
+  req.open('GET', `./sample/${filename}`, true);
+  req.responseType = 'arraybuffer';
+  req.onload = function(e) {
+     ctx.decodeAudioData(this.response,function(decodedArrayBuffer) {
+        buffer[bufferProp] = decodedArrayBuffer;
+
+        }, function(e) {
+        console.log('Error decoding file', e);
+        });
+  };
+  req.send();
+}
+
+function testEnded(e){
+  //console.log(ctx.currentTime - startedSustain[e.target.keyNumber]);
+  startedSustain[e.target.keyNumber] = 0;
+}
+
+
+function generateSound(keyNumber){
+
+  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
+  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
+
+  if(startedSustain[keyNumber]){
+    osc[keyNumber].disconnect();
+  }
+
+  osc[keyNumber] = ctx.createOscillator();
+  osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
+  osc[keyNumber].onended = testEnded;
+  osc[keyNumber].keyNumber = keyNumber;
+
+  gainNode[keyNumber] = ctx.createGain();
+  gainNode[keyNumber].gain.setValueAtTime(1,0);
+  gainNode[keyNumber].connect(destination);
+
+  osc[keyNumber].connect(gainNode[keyNumber]);
+  gainNode[keyNumber].gain.linearRampToValueAtTime(0, ctx.currentTime + SUSTAIN_TIME);
+  osc[keyNumber].start(0);
+
+
+}
+
+function soundPlay(key){
+  source = ctx.createBufferSource();
+  source.buffer = buffer.metronome;
+
+
+
+  let keyTone = +key.dataset.tone;
+  let oct = +key.parentElement.dataset.oct+2;
+  let keyNumber = oct*12+keyTone;
+
+  generateSound(keyNumber);
+
+
+}
+
+function soundStop(key){
+ // let cur = ctx.currentTime;
+  let keyTone = +key.dataset.tone;
+  let oct = +key.parentElement.dataset.oct+2;
+  let keyNumber = oct*12+keyTone;
+  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
+
+  if(!osc[keyNumber]){
+    return;
+  }
+
+  startedSustain[keyNumber] = ctx.currentTime;
+  osc[keyNumber].stop(ctx.currentTime+SUSTAIN_TIME);
+  console.log("stop");
+
+}
+
+
+
+// let gainNode =  ctx.createGain();
+//let delayNode = ctx.createDelay();
+
+
+//delayNode.delayTime.setValueAtTime(.5,0);
+//let convolverNode = ctx.createConvolver();   //impulse response
+
+//let filterNode = ctx.createBiquadFilter();
+//filterNode.type = "peaking";
+//filterNode.frequency.setValueAtTime(64,0);
+//filterNode.Q.setValueAtTime(10,0);
+//filterNode.gain.setValueAtTime(35,0);
+//console.log(filterNode);
+
+
+//  var analyser = context.createAnalyser();
+//// ����������� �������������� �����
+//// ���� �� ���������, ��� ��� ����� - ������� 512, 1024 ��� 2048 ;)
+//  analyser.fftSize = 2048;
+//// ������� ������� ��� �������� ������
+//  fFrequencyData = new Float32Array(analyser.frequencyBinCount);
+//  bFrequencyData = new Uint8Array(analyser.frequencyBinCount);
+//  bTimeData = new Uint8Array(analyser.frequencyBinCount);
+//// �������� ������
+//  analyser.getFloatFrequencyData(fFrequencyData);
+//  analyser.getByteFrequencyData(bFrequencyData);
+//  analyser.getByteTimeDomainData(bTimeData);
+//// ������ � ��� ���� ������� fFrequencyData, bFrequencyData, bTimeData, � �������� ����� ������ ���, ��� ����������
+
+
+//source.connect(filterNode);
+
+//filterNode.connect(destination);
+
+//let now = ctx.currentTime;
+//source.start(0);
+
+/***/ }),
+/* 3 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__ = __webpack_require__(3);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__ = __webpack_require__(4);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__keymap_js__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sound_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sound_js__ = __webpack_require__(2);
 
 
 
@@ -184,14 +327,14 @@ document.addEventListener('DOMContentLoaded', ready);
 
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["b"] = enableVisualClick;
 /* harmony export (immutable) */ __webpack_exports__["a"] = enableKeyboardPress;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__sound_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__sound_js__ = __webpack_require__(2);
 
 
 
@@ -273,13 +416,14 @@ function playKey(e) {
 }
 
 function stopKey(e) {
+
   if(e && isPressedOnKeyboard(this)){
     return;
   };
 
   this.dataset.isPressed = false;
 
-  if(e && !(e.buttons & 1)){
+  if(e && e.type=="mouseout" && !(e.buttons & 1)){
     return;
   }
   __WEBPACK_IMPORTED_MODULE_1__sound_js__["c" /* soundStop */](this);
@@ -354,136 +498,6 @@ function enableKeyboardPress(){
 }
 
 
-
-/***/ }),
-/* 4 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = initMetronome;
-/* harmony export (immutable) */ __webpack_exports__["b"] = soundPlay;
-/* harmony export (immutable) */ __webpack_exports__["c"] = soundStop;
-let STD_TUNING = 440;    // tuning A 1-st oct  std == 440Hz
-let STD_KEYNUMBER_A = 46; // place of A-note 1-st oct on piano board
-let ctx = new AudioContext();
-let buffer = {};   // buffer.metronome etc
-let source ,destination ;
-let osc = {};  //for 84 keys
-let gainNode = {};
-destination = ctx.destination;
-
-
-
-function initMetronome(){
-  loadSample("metronome.mp3", "metronome");
-}
-
-function loadSample(filename, bufferProp){
-  let req = new XMLHttpRequest();
-  req.open('GET', `./sample/${filename}`, true);
-  req.responseType = 'arraybuffer';
-  req.onload = function(e) {
-     ctx.decodeAudioData(this.response,function(decodedArrayBuffer) {
-        buffer[bufferProp] = decodedArrayBuffer;
-
-        }, function(e) {
-        console.log('Error decoding file', e);
-        });
-  };
-  req.send();
-}
-
-function generateSound(keyNumber){
-
-  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
-  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
-
-  osc[keyNumber] = ctx.createOscillator();
-  osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
-
-  gainNode[keyNumber] = ctx.createGain();
-  osc[keyNumber].connect(gainNode[keyNumber]);
-
-  gainNode[keyNumber].connect(destination);
-  gainNode[keyNumber].gain.setValueAtTime(.4,ctx.currentTime);
-  gainNode[keyNumber].gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
-
-
-  osc[keyNumber].start(0);
-  console.log(keyNumber);
-}
-
-function soundPlay(key){
-  source = ctx.createBufferSource();
-  source.buffer = buffer.metronome;
-
-
-
- // let gainNode =  ctx.createGain();
-  //let delayNode = ctx.createDelay();
-
-
-  //delayNode.delayTime.setValueAtTime(.5,0);
-  //let convolverNode = ctx.createConvolver();   //impulse response
-
-  //let filterNode = ctx.createBiquadFilter();
-  //filterNode.type = "peaking";
-  //filterNode.frequency.setValueAtTime(64,0);
-  //filterNode.Q.setValueAtTime(10,0);
-  //filterNode.gain.setValueAtTime(35,0);
-  //console.log(filterNode);
-
-
-//  var analyser = context.createAnalyser();
-//// ����������� �������������� �����
-//// ���� �� ���������, ��� ��� ����� - ������� 512, 1024 ��� 2048 ;)
-//  analyser.fftSize = 2048;
-//// ������� ������� ��� �������� ������
-//  fFrequencyData = new Float32Array(analyser.frequencyBinCount);
-//  bFrequencyData = new Uint8Array(analyser.frequencyBinCount);
-//  bTimeData = new Uint8Array(analyser.frequencyBinCount);
-//// �������� ������
-//  analyser.getFloatFrequencyData(fFrequencyData);
-//  analyser.getByteFrequencyData(bFrequencyData);
-//  analyser.getByteTimeDomainData(bTimeData);
-//// ������ � ��� ���� ������� fFrequencyData, bFrequencyData, bTimeData, � �������� ����� ������ ���, ��� ����������
-
-
-  //source.connect(filterNode);
-
-  //filterNode.connect(destination);
-
-  //let now = ctx.currentTime;
-  //source.start(0);
-  let keyTone = +key.dataset.tone;
-  let oct = +key.parentElement.dataset.oct+2;
-  let keyNumber = oct*12+keyTone;
-
-
-  generateSound(keyNumber);
-
-
-
-
-
-
-  //source.stop(now+1);
-
-  //console.log(toneHz);
-}
-
-function soundStop(key){
- // let cur = ctx.currentTime;
-  let keyTone = +key.dataset.tone;
-  let oct = +key.parentElement.dataset.oct+2;
-  let keyNumber = oct*12+keyTone;
-  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
-  if(!osc[keyNumber]){
-    return;
-  }
-  osc[keyNumber].stop(ctx.currentTime+2);
-
-}
 
 /***/ })
 /******/ ]);
