@@ -15,12 +15,20 @@
   <script src="./dist/bundle.js"></script>
 </head>
 <body>
-
+<input id="volume" class="metronome-controls volume" data-control="volume" type="range" min="0" max="1" step="0.01" value="0.5">
+<input id="speed" class="metronome-controls" data-control="speed" type="range" min="40" max="220" value="70">
 <!--  first viewbox param is x-offset 1470 default-->
 <svg class="piano" xmlns="http://www.w3.org/2000/svg"  xmlns:xlink="http://www.w3.org/1999/xlink" width="980" height="516" viewBox="0 0 980 516">
 <g class="hull">
   <rect x="0" y="0" width="980" height="516"></rect>
   <text class="logo" x="15" y="30">Robo-Music</text>
+  <g class="metronome" transform="translate(800,20)">
+    <rect class="area" width="160" height="100"></rect>
+    <text x="80" y="20" class="label">METRONOME</text>
+    <rect class="display" x="70" y="30" width="60" height="40"></rect>
+    <circle class="power" r="15" cx="40" cy="50"></circle>
+    <text id="tempo" class="tempo" x="100" y="57">70</text>
+  </g>
 </g>
   <g class="board" transform="translate(-1470,140)">
   <svg width="3430" height="376">

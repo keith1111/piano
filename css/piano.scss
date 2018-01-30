@@ -133,3 +133,57 @@ body{
   fill: #dfdfdf;
   stroke: #dfdfdf;
 }
+
+.metronome{
+  .area{
+    stroke: #dfdfdd;
+  }
+
+
+  .label{
+    text-anchor:middle;
+    stroke: #dfdfdd;
+  }
+
+  .display{
+    stroke: #dfdfdd;
+    fill: #011306;
+  }
+
+  .tempo{
+    stroke: #40775f;
+    display:none;
+    font-size: 1.5rem;
+    text-anchor: middle;
+
+    &.on{
+     display:block;
+    }
+  }
+
+  .power{
+    stroke: #eae3db;
+    fill: #4c0000;
+    transition: 1s;
+
+    &.on{
+      stroke: #011306;
+      fill: #920c06;
+    }
+  }
+}
+
+.metronome-controls{
+  position: absolute;
+  right: 18vw;
+  width: 8vw;
+  top: calc(100px + 6.5vw);
+
+  &.volume{
+    right: 15vw;
+    width: 4.5vw;
+    top: calc(100px + 4vw);
+    transform: rotate(-90deg);
+  }
+
+}
