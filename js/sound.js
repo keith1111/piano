@@ -77,7 +77,10 @@ function startMetronome(){
   playMetronome();
   tempo = document.querySelector('#speed').value;
   metronomeTimer = setTimeout( startMetronome, 60000/tempo);
-  console.log(tempo);
+}
+
+export function adjustMetronomeVolume(vol){
+  metronomeGain.gain.setValueAtTime(vol,0);
 }
 
 function stopMetronome(){

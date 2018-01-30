@@ -1,4 +1,4 @@
-import {toggleMetronome} from './sound.js';
+import {toggleMetronome, adjustMetronomeVolume} from './sound.js';
 
 export function init(){
   let controls = document.querySelectorAll(".metronome-controls");
@@ -13,6 +13,9 @@ function setControl(){
   this.setAttribute('value', this.value);
   if(this.dataset.control == "speed"){
     document.querySelector("#tempo").textContent = this.value;
+  } else if(this.dataset.control=="volume")
+  {
+    adjustMetronomeVolume(this.value);
   }
 }
 

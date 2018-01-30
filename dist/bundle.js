@@ -160,10 +160,11 @@ function updateKeysSigns(){
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = initMetronome;
-/* harmony export (immutable) */ __webpack_exports__["d"] = toggleMetronome;
-/* harmony export (immutable) */ __webpack_exports__["b"] = soundPlay;
-/* harmony export (immutable) */ __webpack_exports__["c"] = soundStop;
+/* harmony export (immutable) */ __webpack_exports__["b"] = initMetronome;
+/* harmony export (immutable) */ __webpack_exports__["e"] = toggleMetronome;
+/* harmony export (immutable) */ __webpack_exports__["a"] = adjustMetronomeVolume;
+/* harmony export (immutable) */ __webpack_exports__["c"] = soundPlay;
+/* harmony export (immutable) */ __webpack_exports__["d"] = soundStop;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__metronome_controls_js__ = __webpack_require__(5);
 
 
@@ -244,7 +245,10 @@ function startMetronome(){
   playMetronome();
   tempo = document.querySelector('#speed').value;
   metronomeTimer = setTimeout( startMetronome, 60000/tempo);
-  console.log(tempo);
+}
+
+function adjustMetronomeVolume(vol){
+  metronomeGain.gain.setValueAtTime(vol,0);
 }
 
 function stopMetronome(){
@@ -386,7 +390,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 function ready(){
-  __WEBPACK_IMPORTED_MODULE_3__sound_js__["a" /* initMetronome */]();
+  __WEBPACK_IMPORTED_MODULE_3__sound_js__["b" /* initMetronome */]();
   __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__["b" /* enableVisualClick */]();
   __WEBPACK_IMPORTED_MODULE_0__board_js__["a" /* enableOctaveChange */]();
   __WEBPACK_IMPORTED_MODULE_2__keymap_js__["a" /* signKeys */]();
@@ -483,7 +487,7 @@ function playKey(e) {
     return;
   };
   this.dataset.isPressed = true;
-  __WEBPACK_IMPORTED_MODULE_1__sound_js__["b" /* soundPlay */](this);
+  __WEBPACK_IMPORTED_MODULE_1__sound_js__["c" /* soundPlay */](this);
 
 }
 
@@ -498,7 +502,7 @@ function stopKey(e) {
   if(e && e.type=="mouseout" && !(e.buttons & 1)){
     return;
   }
-  __WEBPACK_IMPORTED_MODULE_1__sound_js__["c" /* soundStop */](this);
+  __WEBPACK_IMPORTED_MODULE_1__sound_js__["d" /* soundStop */](this);
 }
 
 function isPressedOnKeyboard(key){
@@ -593,13 +597,16 @@ function setControl(){
   this.setAttribute('value', this.value);
   if(this.dataset.control == "speed"){
     document.querySelector("#tempo").textContent = this.value;
+  } else if(this.dataset.control=="volume")
+  {
+    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["a" /* adjustMetronomeVolume */])(this.value);
   }
 }
 
 function togglePower(){
   this.classList.toggle('on');
   document.querySelector('#tempo').classList.toggle('on');
-  Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["d" /* toggleMetronome */])(this.classList.contains('on'));
+  Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["e" /* toggleMetronome */])(this.classList.contains('on'));
 }
 
 /***/ })
