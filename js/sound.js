@@ -1,4 +1,5 @@
 import * as metronomeControls from './metronome-controls.js';
+import * as cpuPlayer from './cpuPlayer.js';
 
 let STD_TUNING = 440;    // tuning A 1-st oct  std == 440Hz
 let STD_KEYNUMBER_A = 46; // place of A-note 1-st oct on piano board
@@ -13,8 +14,15 @@ let gainNode = {};
 let volumeManualNode, whistleFilterStep1, whistleFilterStep2, compressor;   //  manual sound nodes
 let startedSustain = {};
 
+
+let oscCpu = {};
+let gainNodeCpu = {};
+let volumeCpu, whistleFilterCpuStep1, whistleFilterCpuStep2, compressorCpu;   //  auto sound nodes
+let startedSustainCpu = {};
+
 let metronomeSource, metronomeGain;
 let metronomeTimer;
+let metronomeOn = false;
 
 
 let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100];
@@ -25,6 +33,18 @@ for(let i=0;i<overtones.length;i++){
   imag[i] = 0;
 }
 let pianoTable = ctx.createPeriodicWave(real, imag);
+
+export function getTempo(){
+  return tempo;
+}
+
+export function setTempo(newTempo){
+  tempo = newTempo;
+}
+
+export function getTime(){
+  return ctx.currentTime;
+}
 
 function initManualSound(){
   volumeManualNode = ctx.createGain();
@@ -55,36 +75,65 @@ function initManualSound(){
   compressor.connect(destination);
 }
 
+function initCpuSound(){
+  cpuPlayer.init();
+
+  volumeCpu = ctx.createGain();
+  volumeCpu.gain.setValueAtTime(1,0);
+
+  whistleFilterCpuStep1 = ctx.createBiquadFilter();
+  whistleFilterCpuStep1.type = 'highshelf';
+  whistleFilterCpuStep1.Q.setValueAtTime(.05,0);
+  whistleFilterCpuStep1.frequency.setValueAtTime(7000,0);
+  whistleFilterCpuStep1.gain.setValueAtTime(-45,0);
+
+  whistleFilterCpuStep2 = ctx.createBiquadFilter();
+  whistleFilterCpuStep2.type = 'highshelf';
+  whistleFilterCpuStep2.Q.setValueAtTime(.05,0);
+  whistleFilterCpuStep2.frequency.setValueAtTime(10000,0);
+  whistleFilterCpuStep2.gain.setValueAtTime(-70,0);
+
+  compressorCpu = ctx.createDynamicsCompressor();
+
+  compressorCpu.attack.setValueAtTime(.1,0);
+  compressorCpu.knee.setValueAtTime(12,0);
+  compressorCpu.ratio.setValueAtTime(15,0);
+  compressorCpu.release.setValueAtTime(1,0);
+
+  volumeCpu.connect(whistleFilterCpuStep1);
+  whistleFilterCpuStep1.connect(whistleFilterCpuStep2);
+  whistleFilterCpuStep2.connect(compressorCpu);
+  compressorCpu.connect(destination);
+}
+
 export function initMetronome(){
   loadSample("metronome.mp3", "metronome");
   metronomeControls.init();
-
-
-
-
-
+  initCpuSound();
 }
 
-export function toggleMetronome(on){
-  if(on){
-    startMetronome();
-  }else{
-    stopMetronome();
-  }
-}
 
-function startMetronome(){
+
+export function startMetronome(){
+
+  document.querySelector('#tempo').classList.add('on');
+  document.querySelector('.power').classList.add('on');
+  metronomeOn = true;
   playMetronome();
-  tempo = document.querySelector('#speed').value;
-  metronomeTimer = setTimeout( startMetronome, 60000/tempo);
+
+
 }
 
 export function adjustMetronomeVolume(vol){
   metronomeGain.gain.setValueAtTime(vol,0);
 }
 
-function stopMetronome(){
+export function stopMetronome(){
+
   clearTimeout(metronomeTimer);
+  metronomeOn = false;
+  document.querySelector(".power").classList.remove('on');
+  document.querySelector('#tempo').classList.remove('on');
 }
 
 function playMetronome(){
@@ -94,6 +143,21 @@ function playMetronome(){
 
   metronomeSource.start(0);
   metronomeSource.stop(ctx.currentTime+.26);
+
+  tempo = document.querySelector('#speed').value;
+  if(metronomeOn){
+    metronomeTimer = setTimeout( startMetronome, 60000/tempo);
+  }
+}
+
+export function playMetronomeSingle(time){
+  metronomeSource = ctx.createBufferSource();
+  metronomeSource.buffer = buffer.metronome;
+  metronomeSource.connect(metronomeGain);
+
+  metronomeSource.start(time);
+
+  metronomeSource.stop(time+.26);
 }
 
 function loadSample(filename, bufferProp){
@@ -118,6 +182,12 @@ function loadSample(filename, bufferProp){
 function resetSustain(e){
   //console.log(ctx.currentTime - startedSustain[e.target.keyNumber]);
   startedSustain[e.target.keyNumber] = 0;
+}
+
+function resetSustainCpu(keyNumber){
+  //console.log(ctx.currentTime - startedSustain[e.target.keyNumber]);
+  startedSustainCpu[keyNumber] = 0;
+
 }
 
 
@@ -176,6 +246,29 @@ export function soundStop(key){
   osc[keyNumber].stop(ctx.currentTime+SUSTAIN_TIME);
 
 
+}
+
+
+
+export function soundPlayCpu(keyNumber, time, duration){
+  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
+  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
+
+
+  oscCpu[keyNumber] = ctx.createOscillator();
+  oscCpu[keyNumber].frequency.setValueAtTime(toneHz, 0);
+  oscCpu[keyNumber].setPeriodicWave(pianoTable);
+
+  //oscCpu[keyNumber].onended = resetSustainCpu(keyNumber);
+
+  gainNodeCpu[keyNumber] = ctx.createGain();
+  gainNodeCpu[keyNumber].gain.setValueAtTime(1,0);
+
+  gainNodeCpu[keyNumber].connect(volumeCpu);
+
+  oscCpu[keyNumber].connect(gainNodeCpu[keyNumber]);
+  gainNodeCpu[keyNumber].gain.linearRampToValueAtTime(0, time + duration + SUSTAIN_TIME/4);
+  oscCpu[keyNumber].start(time);
 }
 
 

@@ -68,104 +68,20 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = enableOctaveChange;
-/* harmony export (immutable) */ __webpack_exports__["b"] = offset;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__keymap_js__ = __webpack_require__(1);
-
-
-function enableOctaveChange(){
-
-
-  document.addEventListener("keydown", moveBoard);
-
-  function moveBoard(e){
-    if(e.keyCode == 33){
-      octaveMove(-1);
-      Object(__WEBPACK_IMPORTED_MODULE_0__keymap_js__["b" /* updateKeysSigns */])();
-
-    }else if(e.keyCode==34){
-      octaveMove(1);
-      Object(__WEBPACK_IMPORTED_MODULE_0__keymap_js__["b" /* updateKeysSigns */])();
-    }
-  }
-}
-
-function offset(){
-  let keys = document.querySelector(".board");
-
-  if(arguments.length){
-    let newOffset = arguments[0];
-    keys.setAttribute("transform", `translate(${newOffset},140)`);
-    return newOffset;
-  }
-  return offsetFromAttr(keys.getAttribute("transform"));
-}
-
-function offsetFromAttr(transform){
-  let pos = transform.indexOf('(');
-  let trimmedAttr = transform.slice(pos+1);
-  return parseInt(trimmedAttr);
-}
-
-function octaveMove(change){
-  let OCT_WIDTH = -490;
-  let currentOffset = offset();
-  let currentOct = currentOffset/OCT_WIDTH - 2;
-
-  if(change == 1 && currentOct < 3){
-    offset( currentOffset +=OCT_WIDTH );
-  } else if( change == -1 && currentOct > -2){
-    offset( currentOffset -=OCT_WIDTH );
-  }
-}
-
-/***/ }),
-/* 1 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = signKeys;
-/* harmony export (immutable) */ __webpack_exports__["b"] = updateKeysSigns;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(0);
-
-
-function signKeys(){
-  updateKeysSigns();
-
-
-}
-
-let TEXT_SIGNS = {
-  current: [-1, "Z","S", "X","D","C", "V","G", "B","H", "N","J", "M"],
-  next: [-1, "Y","7","U","8","I","o","0","P","-","[" ,"=","]"]
-};
-
-function updateKeysSigns(){
-  let keys = document.querySelectorAll(".piano-key");
-  let OCT_WIDTH = -490;
-  let currentOffset = Object(__WEBPACK_IMPORTED_MODULE_0__board_js__["b" /* offset */])();
-  let currentOct = currentOffset/OCT_WIDTH - 2;
-  keys.forEach( function(key){
-    let keyOct = key.parentElement.dataset.oct;
-    if( keyOct < currentOct || keyOct > currentOct+1){
-      return;
-    }
-    let tone = key.dataset.tone;
-    key.querySelector('text').textContent = (keyOct == currentOct) ? TEXT_SIGNS.current[tone] : TEXT_SIGNS.next[tone];
-  });
-}
-
-/***/ }),
-/* 2 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (immutable) */ __webpack_exports__["b"] = initMetronome;
-/* harmony export (immutable) */ __webpack_exports__["e"] = toggleMetronome;
+/* harmony export (immutable) */ __webpack_exports__["b"] = getTempo;
+/* harmony export (immutable) */ __webpack_exports__["f"] = setTempo;
+/* harmony export (immutable) */ __webpack_exports__["c"] = getTime;
+/* harmony export (immutable) */ __webpack_exports__["d"] = initMetronome;
+/* harmony export (immutable) */ __webpack_exports__["j"] = startMetronome;
 /* harmony export (immutable) */ __webpack_exports__["a"] = adjustMetronomeVolume;
-/* harmony export (immutable) */ __webpack_exports__["c"] = soundPlay;
-/* harmony export (immutable) */ __webpack_exports__["d"] = soundStop;
+/* harmony export (immutable) */ __webpack_exports__["k"] = stopMetronome;
+/* harmony export (immutable) */ __webpack_exports__["e"] = playMetronomeSingle;
+/* harmony export (immutable) */ __webpack_exports__["g"] = soundPlay;
+/* harmony export (immutable) */ __webpack_exports__["i"] = soundStop;
+/* harmony export (immutable) */ __webpack_exports__["h"] = soundPlayCpu;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__metronome_controls_js__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__cpuPlayer_js__ = __webpack_require__(7);
+
 
 
 let STD_TUNING = 440;    // tuning A 1-st oct  std == 440Hz
@@ -181,8 +97,15 @@ let gainNode = {};
 let volumeManualNode, whistleFilterStep1, whistleFilterStep2, compressor;   //  manual sound nodes
 let startedSustain = {};
 
+
+let oscCpu = {};
+let gainNodeCpu = {};
+let volumeCpu, whistleFilterCpuStep1, whistleFilterCpuStep2, compressorCpu;   //  auto sound nodes
+let startedSustainCpu = {};
+
 let metronomeSource, metronomeGain;
 let metronomeTimer;
+let metronomeOn = false;
 
 
 let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100];
@@ -193,6 +116,18 @@ for(let i=0;i<overtones.length;i++){
   imag[i] = 0;
 }
 let pianoTable = ctx.createPeriodicWave(real, imag);
+
+function getTempo(){
+  return tempo;
+}
+
+function setTempo(newTempo){
+  tempo = newTempo;
+}
+
+function getTime(){
+  return ctx.currentTime;
+}
 
 function initManualSound(){
   volumeManualNode = ctx.createGain();
@@ -223,28 +158,53 @@ function initManualSound(){
   compressor.connect(destination);
 }
 
+function initCpuSound(){
+  __WEBPACK_IMPORTED_MODULE_1__cpuPlayer_js__["a" /* init */]();
+
+  volumeCpu = ctx.createGain();
+  volumeCpu.gain.setValueAtTime(1,0);
+
+  whistleFilterCpuStep1 = ctx.createBiquadFilter();
+  whistleFilterCpuStep1.type = 'highshelf';
+  whistleFilterCpuStep1.Q.setValueAtTime(.05,0);
+  whistleFilterCpuStep1.frequency.setValueAtTime(7000,0);
+  whistleFilterCpuStep1.gain.setValueAtTime(-45,0);
+
+  whistleFilterCpuStep2 = ctx.createBiquadFilter();
+  whistleFilterCpuStep2.type = 'highshelf';
+  whistleFilterCpuStep2.Q.setValueAtTime(.05,0);
+  whistleFilterCpuStep2.frequency.setValueAtTime(10000,0);
+  whistleFilterCpuStep2.gain.setValueAtTime(-70,0);
+
+  compressorCpu = ctx.createDynamicsCompressor();
+
+  compressorCpu.attack.setValueAtTime(.1,0);
+  compressorCpu.knee.setValueAtTime(12,0);
+  compressorCpu.ratio.setValueAtTime(15,0);
+  compressorCpu.release.setValueAtTime(1,0);
+
+  volumeCpu.connect(whistleFilterCpuStep1);
+  whistleFilterCpuStep1.connect(whistleFilterCpuStep2);
+  whistleFilterCpuStep2.connect(compressorCpu);
+  compressorCpu.connect(destination);
+}
+
 function initMetronome(){
   loadSample("metronome.mp3", "metronome");
   __WEBPACK_IMPORTED_MODULE_0__metronome_controls_js__["a" /* init */]();
-
-
-
-
-
+  initCpuSound();
 }
 
-function toggleMetronome(on){
-  if(on){
-    startMetronome();
-  }else{
-    stopMetronome();
-  }
-}
+
 
 function startMetronome(){
+
+  document.querySelector('#tempo').classList.add('on');
+  document.querySelector('.power').classList.add('on');
+  metronomeOn = true;
   playMetronome();
-  tempo = document.querySelector('#speed').value;
-  metronomeTimer = setTimeout( startMetronome, 60000/tempo);
+
+
 }
 
 function adjustMetronomeVolume(vol){
@@ -252,7 +212,11 @@ function adjustMetronomeVolume(vol){
 }
 
 function stopMetronome(){
+
   clearTimeout(metronomeTimer);
+  metronomeOn = false;
+  document.querySelector(".power").classList.remove('on');
+  document.querySelector('#tempo').classList.remove('on');
 }
 
 function playMetronome(){
@@ -262,6 +226,21 @@ function playMetronome(){
 
   metronomeSource.start(0);
   metronomeSource.stop(ctx.currentTime+.26);
+
+  tempo = document.querySelector('#speed').value;
+  if(metronomeOn){
+    metronomeTimer = setTimeout( startMetronome, 60000/tempo);
+  }
+}
+
+function playMetronomeSingle(time){
+  metronomeSource = ctx.createBufferSource();
+  metronomeSource.buffer = buffer.metronome;
+  metronomeSource.connect(metronomeGain);
+
+  metronomeSource.start(time);
+
+  metronomeSource.stop(time+.26);
 }
 
 function loadSample(filename, bufferProp){
@@ -286,6 +265,12 @@ function loadSample(filename, bufferProp){
 function resetSustain(e){
   //console.log(ctx.currentTime - startedSustain[e.target.keyNumber]);
   startedSustain[e.target.keyNumber] = 0;
+}
+
+function resetSustainCpu(keyNumber){
+  //console.log(ctx.currentTime - startedSustain[e.target.keyNumber]);
+  startedSustainCpu[keyNumber] = 0;
+
 }
 
 
@@ -348,6 +333,29 @@ function soundStop(key){
 
 
 
+function soundPlayCpu(keyNumber, time, duration){
+  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
+  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
+
+
+  oscCpu[keyNumber] = ctx.createOscillator();
+  oscCpu[keyNumber].frequency.setValueAtTime(toneHz, 0);
+  oscCpu[keyNumber].setPeriodicWave(pianoTable);
+
+  //oscCpu[keyNumber].onended = resetSustainCpu(keyNumber);
+
+  gainNodeCpu[keyNumber] = ctx.createGain();
+  gainNodeCpu[keyNumber].gain.setValueAtTime(1,0);
+
+  gainNodeCpu[keyNumber].connect(volumeCpu);
+
+  oscCpu[keyNumber].connect(gainNodeCpu[keyNumber]);
+  gainNodeCpu[keyNumber].gain.linearRampToValueAtTime(0, time + duration + SUSTAIN_TIME/4);
+  oscCpu[keyNumber].start(time);
+}
+
+
+
 // let gainNode =  ctx.createGain();
 //let delayNode = ctx.createDelay();
 
@@ -375,22 +383,117 @@ function soundStop(key){
 
 
 /***/ }),
+/* 1 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = enableOctaveChange;
+/* harmony export (immutable) */ __webpack_exports__["b"] = offset;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__keymap_js__ = __webpack_require__(2);
+
+
+function enableOctaveChange(){
+
+
+  document.addEventListener("keydown", moveBoard);
+
+  function moveBoard(e){
+    if(e.keyCode == 33){
+      octaveMove(-1);
+      Object(__WEBPACK_IMPORTED_MODULE_0__keymap_js__["b" /* updateKeysSigns */])();
+
+    }else if(e.keyCode==34){
+      octaveMove(1);
+      Object(__WEBPACK_IMPORTED_MODULE_0__keymap_js__["b" /* updateKeysSigns */])();
+    }
+  }
+}
+
+function offset(){
+  let keys = document.querySelector(".board");
+
+  if(arguments.length){
+    let newOffset = arguments[0];
+    keys.setAttribute("transform", `translate(${newOffset},140)`);
+    return newOffset;
+  }
+  return offsetFromAttr(keys.getAttribute("transform"));
+}
+
+function offsetFromAttr(transform){
+  let pos = transform.indexOf('(');
+  let trimmedAttr = transform.slice(pos+1);
+  return parseInt(trimmedAttr);
+}
+
+function octaveMove(change){
+  let OCT_WIDTH = -490;
+  let currentOffset = offset();
+  let currentOct = currentOffset/OCT_WIDTH - 2;
+
+  if(change == 1 && currentOct < 3){
+    offset( currentOffset +=OCT_WIDTH );
+  } else if( change == -1 && currentOct > -2){
+    offset( currentOffset -=OCT_WIDTH );
+  }
+}
+
+/***/ }),
+/* 2 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = signKeys;
+/* harmony export (immutable) */ __webpack_exports__["b"] = updateKeysSigns;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(1);
+
+
+function signKeys(){
+  updateKeysSigns();
+
+
+}
+
+let TEXT_SIGNS = {
+  current: [-1, "Z","S", "X","D","C", "V","G", "B","H", "N","J", "M"],
+  next: [-1, "Y","7","U","8","I","o","0","P","-","[" ,"=","]"]
+};
+
+function updateKeysSigns(){
+  let keys = document.querySelectorAll(".piano-key");
+  let OCT_WIDTH = -490;
+  let currentOffset = Object(__WEBPACK_IMPORTED_MODULE_0__board_js__["b" /* offset */])();
+  let currentOct = currentOffset/OCT_WIDTH - 2;
+  keys.forEach( function(key){
+    let keyOct = key.parentElement.dataset.oct;
+    if( keyOct < currentOct || keyOct > currentOct+1){
+      return;
+    }
+    let tone = key.dataset.tone;
+    key.querySelector('text').textContent = (keyOct == currentOct) ? TEXT_SIGNS.current[tone] : TEXT_SIGNS.next[tone];
+  });
+}
+
+/***/ }),
 /* 3 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(1);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__keymap_js__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sound_js__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__keymap_js__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sound_js__ = __webpack_require__(0);
+
+
+
 
 
 
 
 
 function ready(){
-  __WEBPACK_IMPORTED_MODULE_3__sound_js__["b" /* initMetronome */]();
+  __WEBPACK_IMPORTED_MODULE_3__sound_js__["d" /* initMetronome */]();
   __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__["b" /* enableVisualClick */]();
   __WEBPACK_IMPORTED_MODULE_0__board_js__["a" /* enableOctaveChange */]();
   __WEBPACK_IMPORTED_MODULE_2__keymap_js__["a" /* signKeys */]();
@@ -409,8 +512,8 @@ document.addEventListener('DOMContentLoaded', ready);
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["b"] = enableVisualClick;
 /* harmony export (immutable) */ __webpack_exports__["a"] = enableKeyboardPress;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__sound_js__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__sound_js__ = __webpack_require__(0);
 
 
 
@@ -487,7 +590,7 @@ function playKey(e) {
     return;
   };
   this.dataset.isPressed = true;
-  __WEBPACK_IMPORTED_MODULE_1__sound_js__["c" /* soundPlay */](this);
+  __WEBPACK_IMPORTED_MODULE_1__sound_js__["g" /* soundPlay */](this);
 
 }
 
@@ -502,7 +605,7 @@ function stopKey(e) {
   if(e && e.type=="mouseout" && !(e.buttons & 1)){
     return;
   }
-  __WEBPACK_IMPORTED_MODULE_1__sound_js__["d" /* soundStop */](this);
+  __WEBPACK_IMPORTED_MODULE_1__sound_js__["i" /* soundStop */](this);
 }
 
 function isPressedOnKeyboard(key){
@@ -581,7 +684,7 @@ function enableKeyboardPress(){
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = init;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__sound_js__ = __webpack_require__(2);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__sound_js__ = __webpack_require__(0);
 
 
 function init(){
@@ -597,6 +700,7 @@ function setControl(){
   this.setAttribute('value', this.value);
   if(this.dataset.control == "speed"){
     document.querySelector("#tempo").textContent = this.value;
+    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["f" /* setTempo */])(this.value);
   } else if(this.dataset.control=="volume")
   {
     Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["a" /* adjustMetronomeVolume */])(this.value);
@@ -604,10 +708,218 @@ function setControl(){
 }
 
 function togglePower(){
-  this.classList.toggle('on');
-  document.querySelector('#tempo').classList.toggle('on');
-  Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["e" /* toggleMetronome */])(this.classList.contains('on'));
+  if(!this.classList.contains('on')){
+    document.querySelector('#tempo').classList.add('on');
+    this.classList.add('on');
+    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["j" /* startMetronome */])();
+  }else{
+    document.querySelector('#tempo').classList.remove('on');
+    this.classList.remove('on');
+    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["k" /* stopMetronome */])();
+  }
+
+
 }
+
+/***/ }),
+/* 6 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = parse;
+function parse(sheet){
+
+  sheet += " ";  // end
+  let pos = 0;
+  let next = 0;
+  let dur = 4;
+  let time = 0;
+  let commands = [];
+  let timings = [];    //{start: 0, end: 1} in 4th notes
+
+
+  while(true) {
+    let c = sheet[pos];
+    if (c == "t" || c == 'o') {
+      next = sheet.slice(pos).indexOf(" ");
+      let command = sheet.substr(pos, next);
+
+      timings.push({start: time, end: time});
+      commands.push(command);
+      pos += next+1;
+    }
+    else if (c == '-') {
+      timings.push({start: time, end: time});
+      commands.push('o-');
+      pos += 2;
+    }
+    else if (c == '+') {
+      timings.push({start: time, end: time});
+      commands.push('o+');
+      pos += 2;
+    }
+    else if ('cdefgah'.indexOf(c) != -1) {
+      next = sheet.slice(pos).indexOf(" ");
+      let command = sheet.substr(pos, next);
+      timings.push({start: time, end: time + 4 / dur});
+      time += 4 / dur;
+      commands.push(command);
+      pos += next+1;
+    }
+    else if (!isNaN(parseInt(c))) {
+      next = sheet.slice(pos).indexOf(" ");
+      let newDur = +sheet.substr(pos, next);
+      dur = newDur;
+      pos += next+1;
+    }
+
+    if(pos>=sheet.length){
+      break;
+    }
+  }
+
+  return {
+    commands: commands,
+    timings: timings
+  };
+
+}
+
+/***/ }),
+/* 7 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = init;
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__sound_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__sequenceParser_js__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__examples_js__ = __webpack_require__(8);
+
+
+
+
+let NOTES = {
+  'c': 1,
+  'c#': 2,
+  'db': 2,
+  'd': 3,
+  'd#': 4,
+  'eb': 4,
+  'e': 5,
+  'f': 6,
+  'f#': 7,
+  'gb': 7,
+  'g': 8,
+  'g#': 9,
+  'ab': 9,
+  'a': 10,
+  'a#': 11,
+  'hb': 11,
+  'h': 12
+};
+
+function init(){
+  document.querySelector(".example .start").addEventListener("click", takeNotes);
+}
+
+
+function takeNotes() {
+  let notesString = __WEBPACK_IMPORTED_MODULE_2__examples_js__["a" /* examples */][1];
+
+  playCommands(__WEBPACK_IMPORTED_MODULE_1__sequenceParser_js__["a" /* parse */](notesString));
+}
+
+
+function playCommands(sequenceObj) {
+
+  let commands = sequenceObj.commands;
+  let timings = sequenceObj.timings;
+  let oct = 1;
+  let outerTemp = Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["b" /* getTempo */])();
+  let q = 60/outerTemp;     //  4th note of outer tempo in seconds
+  let stdInnerTemp = outerTemp;
+  let currentInnerTemp = outerTemp;
+
+
+
+  timings = timings.map( a=> {
+    return {
+      start: a.start+4,
+      end: a.end+4,
+      duration: a.end-a.start
+    }
+  });
+
+  let ctxTime = Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["c" /* getTime */])();
+  let startTime = ctxTime + 1;
+
+  let lastTact = Math.floor(timings[timings.length-1].end)+1;
+  for(let i=0; i<lastTact; i++){
+    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["e" /* playMetronomeSingle */])(startTime+i*q);
+  }
+
+  for (let i = 0; i < commands.length; i++) {
+
+    if (!timings[i].duration) {
+      if (commands[i].startsWith('t')) {
+        let newInnerTemp = parseInt(commands[i].slice(1));
+        if(stdInnerTemp == outerTemp){
+          stdInnerTemp = newInnerTemp;
+        }
+        currentInnerTemp = newInnerTemp;
+      }
+      else if (commands[i].startsWith('o')) {
+        let nextOct = parseInt(commands[i].slice(1));
+        if (!isNaN(nextOct)) {
+          oct = nextOct;
+
+        }
+        else if (commands[i][1] == '-') {
+          oct--;
+        } else if (commands[i][1] == '+') {
+          oct++;
+        }
+      }
+    }
+
+    else {
+      let key = NOTES[commands[i]] + (oct+2) * 12;
+      Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["h" /* soundPlayCpu */])(key, startTime + timings[i].start*q, timings[i].duration*q);
+    }
+
+  }
+
+
+
+
+}
+
+
+
+/***/ }),
+/* 8 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return examples; });
+let examples = {
+  '1' : 't60 o2 16' +
+  ' c - eb d eb c eb d eb + c - eb d eb c eb d eb' +
+  ' ab f e f c f e f ab f e f c f e f' +
+  ' h f eb f d f eb f h f eb f d f eb f' +
+  ' + c - g f g eb g f g + c - g f g eb g f g' +
+  ' + eb - ab g ab eb ab g ab + eb - ab g ab eb ab g ab' +
+  ' + d - f# e f# d f# e f# + d - f# e f# d f# e f#' +
+  ' + d - g f# g d g f# g + d - g f# g d g f# g' +
+  ' + c - e d e c e d e + c - e d e c e d e' +
+  ' + c - f e f c f e f + c - f e f c f e f' +
+  ' hb f eb f d f eb f hb f eb f d f eb f' +
+  ' hb g f g eb g f g hb g f g eb g f g' +
+  ' ab g f g eb g f g ab g f g eb g f g' +
+  ' ab d c d - hb + d c d ab d c d - hb + d c d' +
+  ' g - hb ab hb + eb - hb ab hb + g - hb ab hb + eb - hb ab hb'
+
+};
 
 /***/ })
 /******/ ]);
