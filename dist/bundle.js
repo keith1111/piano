@@ -72,15 +72,16 @@
 /* harmony export (immutable) */ __webpack_exports__["f"] = setTempo;
 /* harmony export (immutable) */ __webpack_exports__["c"] = getTime;
 /* harmony export (immutable) */ __webpack_exports__["d"] = initMetronome;
-/* harmony export (immutable) */ __webpack_exports__["j"] = startMetronome;
+/* harmony export (immutable) */ __webpack_exports__["k"] = startMetronome;
 /* harmony export (immutable) */ __webpack_exports__["a"] = adjustMetronomeVolume;
-/* harmony export (immutable) */ __webpack_exports__["k"] = stopMetronome;
+/* harmony export (immutable) */ __webpack_exports__["l"] = stopMetronome;
 /* harmony export (immutable) */ __webpack_exports__["e"] = playMetronomeSingle;
 /* harmony export (immutable) */ __webpack_exports__["g"] = soundPlay;
 /* harmony export (immutable) */ __webpack_exports__["i"] = soundStop;
 /* harmony export (immutable) */ __webpack_exports__["h"] = soundPlayCpu;
+/* harmony export (immutable) */ __webpack_exports__["j"] = soundStopCpu;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__metronome_controls_js__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__cpuPlayer_js__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__cpuPlayer_js__ = __webpack_require__(6);
 
 
 
@@ -108,7 +109,8 @@ let metronomeTimer;
 let metronomeOn = false;
 
 
-let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100];
+let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100];   // old
+//let overtones = [0, 1, .66, .25, .33, .1, .5, .12, .23, .12, .1];
 let real = [];
 let imag = [];
 for(let i=0;i<overtones.length;i++){
@@ -267,13 +269,6 @@ function resetSustain(e){
   startedSustain[e.target.keyNumber] = 0;
 }
 
-function resetSustainCpu(keyNumber){
-  //console.log(ctx.currentTime - startedSustain[e.target.keyNumber]);
-  startedSustainCpu[keyNumber] = 0;
-
-}
-
-
 function generateManualSound(keyNumber){
 
   let diffHalftones = keyNumber - STD_KEYNUMBER_A;
@@ -342,17 +337,26 @@ function soundPlayCpu(keyNumber, time, duration){
   oscCpu[keyNumber].frequency.setValueAtTime(toneHz, 0);
   oscCpu[keyNumber].setPeriodicWave(pianoTable);
 
-  //oscCpu[keyNumber].onended = resetSustainCpu(keyNumber);
+ // oscCpu[keyNumber].onended = endCpuSound(keyNumber);
 
   gainNodeCpu[keyNumber] = ctx.createGain();
-  gainNodeCpu[keyNumber].gain.setValueAtTime(1,0);
+  gainNodeCpu[keyNumber].gain.setValueAtTime(1,time);
 
   gainNodeCpu[keyNumber].connect(volumeCpu);
 
   oscCpu[keyNumber].connect(gainNodeCpu[keyNumber]);
   gainNodeCpu[keyNumber].gain.linearRampToValueAtTime(0, time + duration + SUSTAIN_TIME/4);
+
   oscCpu[keyNumber].start(time);
+  oscCpu[keyNumber].stop(time+duration+SUSTAIN_TIME/4);
 }
+
+function soundStopCpu(time){
+  for( let key in oscCpu){
+    oscCpu[key].stop(time + SUSTAIN_TIME);
+  }
+}
+
 
 
 
@@ -711,11 +715,11 @@ function togglePower(){
   if(!this.classList.contains('on')){
     document.querySelector('#tempo').classList.add('on');
     this.classList.add('on');
-    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["j" /* startMetronome */])();
+    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["k" /* startMetronome */])();
   }else{
     document.querySelector('#tempo').classList.remove('on');
     this.classList.remove('on');
-    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["k" /* stopMetronome */])();
+    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["l" /* stopMetronome */])();
   }
 
 
@@ -726,73 +730,9 @@ function togglePower(){
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["a"] = parse;
-function parse(sheet){
-
-  sheet += " ";  // end
-  let pos = 0;
-  let next = 0;
-  let dur = 4;
-  let time = 0;
-  let commands = [];
-  let timings = [];    //{start: 0, end: 1} in 4th notes
-
-
-  while(true) {
-    let c = sheet[pos];
-    if (c == "t" || c == 'o') {
-      next = sheet.slice(pos).indexOf(" ");
-      let command = sheet.substr(pos, next);
-
-      timings.push({start: time, end: time});
-      commands.push(command);
-      pos += next+1;
-    }
-    else if (c == '-') {
-      timings.push({start: time, end: time});
-      commands.push('o-');
-      pos += 2;
-    }
-    else if (c == '+') {
-      timings.push({start: time, end: time});
-      commands.push('o+');
-      pos += 2;
-    }
-    else if ('cdefgah'.indexOf(c) != -1) {
-      next = sheet.slice(pos).indexOf(" ");
-      let command = sheet.substr(pos, next);
-      timings.push({start: time, end: time + 4 / dur});
-      time += 4 / dur;
-      commands.push(command);
-      pos += next+1;
-    }
-    else if (!isNaN(parseInt(c))) {
-      next = sheet.slice(pos).indexOf(" ");
-      let newDur = +sheet.substr(pos, next);
-      dur = newDur;
-      pos += next+1;
-    }
-
-    if(pos>=sheet.length){
-      break;
-    }
-  }
-
-  return {
-    commands: commands,
-    timings: timings
-  };
-
-}
-
-/***/ }),
-/* 7 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = init;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__sound_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__sequenceParser_js__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__sequenceParser_js__ = __webpack_require__(7);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__examples_js__ = __webpack_require__(8);
 
 
@@ -817,6 +757,8 @@ let NOTES = {
   'hb': 11,
   'h': 12
 };
+
+let PROCESSING_TIME = 1; // seconds
 
 function init(){
   document.querySelector(".example .start").addEventListener("click", takeNotes);
@@ -851,7 +793,7 @@ function playCommands(sequenceObj) {
   });
 
   let ctxTime = Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["c" /* getTime */])();
-  let startTime = ctxTime + 1;
+  let startTime = ctxTime + PROCESSING_TIME;
 
   let lastTact = Math.floor(timings[timings.length-1].end)+1;
   for(let i=0; i<lastTact; i++){
@@ -880,6 +822,9 @@ function playCommands(sequenceObj) {
           oct++;
         }
       }
+      else if(commands[i] == '@'){
+        Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["j" /* soundStopCpu */])(startTime+timings[i].start*q);
+      }
     }
 
     else {
@@ -897,6 +842,126 @@ function playCommands(sequenceObj) {
 
 
 /***/ }),
+/* 7 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony export (immutable) */ __webpack_exports__["a"] = parse;
+function parse(sheet){
+
+  let commentRegex = new RegExp('\\*.\*\?\\*', 'g');      //  remove all between    *    ...   *
+  sheet = sheet.replace(commentRegex, '');
+  alert(sheet);
+  sheet += " @";  // end
+
+  let pos = 0;
+  let next = 0;
+  let dur = 4;
+  let time = 0;
+  let commands = [];
+  let timings = [];    //{start: 0, end: 1} in 4th notes
+
+
+  while(true) {
+    let c = sheet[pos];
+    /*    tempo change , octave change :     t60  o2     */
+    if (c == "t" || c == 'o') {
+      next = sheet.slice(pos).indexOf(" ");
+      let command = sheet.substr(pos, next);
+
+      timings.push({start: time, end: time});
+      commands.push(command);
+      pos += next+1;
+    }
+    /*  1 octave down    :     -    */
+    else if (c == '-') {
+      timings.push({start: time, end: time});
+      commands.push('o-');
+      pos ++;
+    }
+    /*  1 octave up    :     +     */
+    else if (c == '+') {
+      timings.push({start: time, end: time});
+      commands.push('o+');
+      pos ++;
+    }
+    /* note detect mode :   c d e f g a h; cb c# ...;  cdc   */
+    else if ('cdefgah'.indexOf(c) != -1) {
+      let quitNoteMode = new RegExp("[^cdefgah#b ]");
+      quitNoteMode.lastIndex = pos;
+      next = pos + quitNoteMode.exec(sheet.slice(pos)).index;
+      let command = "";
+      for(let i=pos; i<next; i++){
+        if('cdefgah'.indexOf(sheet[i]) != -1){
+          if(!command){
+            command = sheet[i];
+          }else{
+            commands.push(command);
+            timings.push({start: time, end: time + 4 / dur});
+            time += 4 / dur;
+            command = sheet[i];
+          }
+        }else if (command && '#b'.indexOf(sheet[i]) != -1){
+          command += sheet[i];
+          commands.push(command);
+          timings.push({start: time, end: time + 4 / dur});
+          time += 4 / dur;
+          command = "";
+        }else if (sheet[i] != ' '){
+          console.log("Unknown command:" + sheet[i]);
+          console.log(sheet.slice(pos, pos+10));
+          commands.push("@");
+          timings.push({start:time, end:time});
+          break;
+        }
+
+        if(i == next-1 && command){
+          commands.push(command);
+          timings.push({start: time, end: time + 4 / dur});
+          time += 4 / dur;
+        }
+      }
+      pos = next;
+
+    }
+    else if (!isNaN(parseInt(c))) {
+      next = sheet.slice(pos).indexOf(" ");
+      let newDur = +sheet.substr(pos, next);
+      dur = newDur;
+      pos += next+1;
+    }
+    else if(c == ' '){
+      pos++;
+    }
+    else if(c == '@'){
+      commands.push("@");
+      timings.push({start:time, end:time});
+      break;
+    }
+    else{
+      console.log("Unknown command:" + c);
+      console.log(sheet.slice(pos, pos+10));
+      commands.push("@");
+      timings.push({start:time, end:time});
+      break;
+    }
+
+    if(pos>=sheet.length){
+      break;
+    }
+  }
+
+  console.log(commands);
+  console.log(timings.map ((a,i)=> Object.assign(a,{command: commands[i]})) );
+
+  return {
+    commands: commands,
+    timings: timings
+  };
+
+}
+
+/***/ }),
 /* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
@@ -904,7 +969,7 @@ function playCommands(sequenceObj) {
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return examples; });
 let examples = {
   '1' : 't60 o2 16' +
-  ' c - eb d eb c eb d eb + c - eb d eb c eb d eb' +
+  ' c -   * this is a comment. Song: Bach Prelude C-moll  *  eb d eb c   eb d  eb+c -ebdeb cebd eb' +
   ' ab f e f c f e f ab f e f c f e f' +
   ' h f eb f d f eb f h f eb f d f eb f' +
   ' + c - g f g eb g f g + c - g f g eb g f g' +
@@ -917,7 +982,25 @@ let examples = {
   ' hb g f g eb g f g hb g f g eb g f g' +
   ' ab g f g eb g f g ab g f g eb g f g' +
   ' ab d c d - hb + d c d ab d c d - hb + d c d' +
-  ' g - hb ab hb + eb - hb ab hb + g - hb ab hb + eb - hb ab hb'
+  ' g - hb ab hb + eb - hb ab hb + g - hb ab hb + eb - hb ab hb' +
+  ' + f c - hb + c - a + c - hb + c f c - hb + c - a + c - hb + c' +
+  ' f d c d - h + d c d f d c d - h + d c d' +
+  ' f d c d - h + d c d f d c d - h + d c d' +
+  ' eb c - h + c - g + c - h + c eb c - h + c - g + c - h + c' +
+  ' - f + eb d eb f eb d eb - f + eb d eb f eb d eb' +
+  ' - f# + c - h + c eb c - h + c - f# + c - h + c eb c - h + c' +
+  ' eb c - h + c - g + c - h + c eb c - h + c - g + c - h + c' +
+  ' f# c - h + c - a + c - h + c f# c - h + c - a + c - h + c' +
+  ' g c - h + c d c - h + c g c - h + c d c - h + c' +
+  ' ab c - h + c d c - h + c ab c - h + c d c - h + c' +
+
+  ' *  PART 2 * +' +
+  ' o-1 ' +
+  ' g h + d f ab f e f h f + d - h ab f e f ' +
+  ' o-1 ' +
+  ' g +c eb g + c -g f# g + eb c g eb c - ab g ab' +
+  'o-1 ' +
+  ' g a + f# + c + eb c - h + c f# c a f# eb c - h +c'
 
 };
 

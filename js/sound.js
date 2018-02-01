@@ -25,7 +25,8 @@ let metronomeTimer;
 let metronomeOn = false;
 
 
-let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100];
+let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100];   // old
+//let overtones = [0, 1, .66, .25, .33, .1, .5, .12, .23, .12, .1];
 let real = [];
 let imag = [];
 for(let i=0;i<overtones.length;i++){
@@ -184,13 +185,6 @@ function resetSustain(e){
   startedSustain[e.target.keyNumber] = 0;
 }
 
-function resetSustainCpu(keyNumber){
-  //console.log(ctx.currentTime - startedSustain[e.target.keyNumber]);
-  startedSustainCpu[keyNumber] = 0;
-
-}
-
-
 function generateManualSound(keyNumber){
 
   let diffHalftones = keyNumber - STD_KEYNUMBER_A;
@@ -259,17 +253,26 @@ export function soundPlayCpu(keyNumber, time, duration){
   oscCpu[keyNumber].frequency.setValueAtTime(toneHz, 0);
   oscCpu[keyNumber].setPeriodicWave(pianoTable);
 
-  //oscCpu[keyNumber].onended = resetSustainCpu(keyNumber);
+ // oscCpu[keyNumber].onended = endCpuSound(keyNumber);
 
   gainNodeCpu[keyNumber] = ctx.createGain();
-  gainNodeCpu[keyNumber].gain.setValueAtTime(1,0);
+  gainNodeCpu[keyNumber].gain.setValueAtTime(1,time);
 
   gainNodeCpu[keyNumber].connect(volumeCpu);
 
   oscCpu[keyNumber].connect(gainNodeCpu[keyNumber]);
   gainNodeCpu[keyNumber].gain.linearRampToValueAtTime(0, time + duration + SUSTAIN_TIME/4);
+
   oscCpu[keyNumber].start(time);
+  oscCpu[keyNumber].stop(time+duration+SUSTAIN_TIME/4);
 }
+
+export function soundStopCpu(time){
+  for( let key in oscCpu){
+    oscCpu[key].stop(time + SUSTAIN_TIME);
+  }
+}
+
 
 
 

@@ -1,4 +1,4 @@
-import {soundPlayCpu, getTempo, playMetronomeSingle, getTime} from './sound.js';
+import {soundPlayCpu, soundStopCpu, getTempo, playMetronomeSingle, getTime} from './sound.js';
 import * as sequenceParser from './sequenceParser.js';
 import {examples} from './examples.js';
 
@@ -21,6 +21,8 @@ let NOTES = {
   'hb': 11,
   'h': 12
 };
+
+let PROCESSING_TIME = 1; // seconds
 
 export function init(){
   document.querySelector(".example .start").addEventListener("click", takeNotes);
@@ -55,7 +57,7 @@ function playCommands(sequenceObj) {
   });
 
   let ctxTime = getTime();
-  let startTime = ctxTime + 1;
+  let startTime = ctxTime + PROCESSING_TIME;
 
   let lastTact = Math.floor(timings[timings.length-1].end)+1;
   for(let i=0; i<lastTact; i++){
@@ -83,6 +85,9 @@ function playCommands(sequenceObj) {
         } else if (commands[i][1] == '+') {
           oct++;
         }
+      }
+      else if(commands[i] == '@'){
+        soundStopCpu(startTime+timings[i].start*q);
       }
     }
 
