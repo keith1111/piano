@@ -885,29 +885,42 @@ function parse(sheet){
       commands.push('o+');
       pos ++;
     }
-    /* note detect mode :   c d e f g a h; cb c# ...;  cdc   */
-    else if ('cdefgah'.indexOf(c) != -1) {
-      let quitNoteMode = new RegExp("[^cdefgah#b ]");
+    /* note detect mode :   c d e f g a h; cb c# ; cdc ebdbc f#gh ;   pause detect : p  */
+    else if ('cdefgahp'.indexOf(c) != -1) {
+      let quitNoteMode = new RegExp("[^cdefgah#bp ]");
       quitNoteMode.lastIndex = pos;
       next = pos + quitNoteMode.exec(sheet.slice(pos)).index;
+      /* buffer */
       let command = "";
       for(let i=pos; i<next; i++){
         if('cdefgah'.indexOf(sheet[i]) != -1){
+
           if(!command){
-            command = sheet[i];
+            /* buffer empty - add note */
+          command = sheet[i];
           }else{
+            /* note already exists in buffer  - play, clear buffer, add new note  */
             commands.push(command);
             timings.push({start: time, end: time + 4 / dur});
             time += 4 / dur;
             command = sheet[i];
           }
-        }else if (command && '#b'.indexOf(sheet[i]) != -1){
+        }
+        else if (command && '#b'.indexOf(sheet[i]) != -1){
+          /* note already exists in buffer - apply halftone up/down, play note, clear buffer, ready for next note  */
           command += sheet[i];
           commands.push(command);
           timings.push({start: time, end: time + 4 / dur});
           time += 4 / dur;
           command = "";
-        }else if (sheet[i] != ' '){
+        }
+        else if (sheet[i] == 'p'){
+          /* pause - add silence (no commands for pause dur)*/
+          time += 4/dur;
+        }
+
+        else if (sheet[i] != ' '){
+          /*  error  */
           console.log("Unknown command:" + sheet[i]);
           console.log(sheet.slice(pos, pos+10));
           commands.push("@");
@@ -930,9 +943,43 @@ function parse(sheet){
       dur = newDur;
       pos += next+1;
     }
+    /* ignore whitespace */
     else if(c == ' '){
       pos++;
     }
+    /*   merge note length  */
+    else if (c == '^'){
+      let noteToFind = '';
+      let currentPos = pos;
+      while(true){
+        currentPos++;
+        if('cdefgah#b '.indexOf(sheet[currentPos]) == -1){
+          break;
+        }
+
+        if('cdefgah'.indexOf(sheet[currentPos]) != -1){
+          if(noteToFind){
+            break;
+          }
+          else{
+            noteToFind = sheet[currentPos];
+          }
+        }else if('#b'.indexOf(sheet[currentPos]) !=- 1){
+          if(noteToFind){
+            noteToFind += sheet[currentPos];
+          }
+          break;
+        }
+
+      }
+
+      let noteIndex = commands.lastIndexOf(noteToFind);
+      time += 4/dur;
+      timings[noteIndex].end = time;
+
+      pos = currentPos;
+    }
+
     else if(c == '@'){
       commands.push("@");
       timings.push({start:time, end:time});
@@ -968,8 +1015,9 @@ function parse(sheet){
 "use strict";
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return examples; });
 let examples = {
-  '1' : 't60 o2 16' +
-  ' c -   * this is a comment. Song: Bach Prelude C-moll  *  eb d eb c   eb d  eb+c -ebdeb cebd eb' +
+  '1' : '* this is a comment. Song: Bach Prelude C-moll  * ' +
+  ' t60 o2 16' +
+  ' c - eb d eb c eb d eb + c - eb d eb c eb d eb' +
   ' ab f e f c f e f ab f e f c f e f' +
   ' h f eb f d f eb f h f eb f d f eb f' +
   ' + c - g f g eb g f g + c - g f g eb g f g' +
@@ -1000,7 +1048,14 @@ let examples = {
   ' o-1 ' +
   ' g +c eb g + c -g f# g + eb c g eb c - ab g ab' +
   'o-1 ' +
-  ' g a + f# + c + eb c - h + c f# c a f# eb c - h +c'
+  ' g a + f# + c + eb c - h + c f# c a f# eb c - h +c' +
+  ' *PART 3*' +
+  ' o2 p d c d eb c - h + c - a +c -h + c d - h a h' +
+  ' g h a h +c  -a g a f# a g a h g f# g' +
+  ' d +g f g ab f eb f d f eb f g eb d eb' +
+  'c eb d eb f d c d - h + dc d eb c -h +c' +
+  '- g + c - h +c - ab + f eb f - g + eb d eb - f + d c d' +
+  ' - eb +c -hb +c - ab f eb f g eb d eb f d c d '
 
 };
 

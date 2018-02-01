@@ -1,6 +1,7 @@
 export let examples = {
-  '1' : 't60 o2 16' +
-  ' c -   * this is a comment. Song: Bach Prelude C-moll  *  eb d eb c   eb d  eb+c -ebdeb cebd eb' +
+  '1' : '* this is a comment. Song: Bach Prelude C-moll  * ' +
+  ' t60 o2 16' +
+  ' c - eb d eb c eb d eb + c - eb d eb c eb d eb' +
   ' ab f e f c f e f ab f e f c f e f' +
   ' h f eb f d f eb f h f eb f d f eb f' +
   ' + c - g f g eb g f g + c - g f g eb g f g' +
@@ -31,6 +32,13 @@ export let examples = {
   ' o-1 ' +
   ' g +c eb g + c -g f# g + eb c g eb c - ab g ab' +
   'o-1 ' +
-  ' g a + f# + c + eb c - h + c f# c a f# eb c - h +c'
+  ' g a + f# + c + eb c - h + c f# c a f# eb c - h +c' +
+  ' *PART 3*' +
+  ' o2 p d c d eb c - h + c - a +c -h + c d - h a h' +
+  ' g h a h +c  -a g a f# a g a h g f# g' +
+  ' d +g f g ab f eb f d f eb f g eb d eb' +
+  'c eb d eb f d c d - h + dc d eb c -h +c' +
+  '- g + c - h +c - ab + f eb f - g + eb d eb - f + d c d' +
+  ' - eb +c -hb +c - ab f eb f g eb d eb f d c d '
 
 };
