@@ -20,6 +20,7 @@ export function parse(sheet){
       next = sheet.slice(pos).indexOf(" ");
       let command = sheet.substr(pos, next);
 
+
       timings.push({start: time, end: time});
       commands.push(command);
       pos += next+1;
@@ -39,8 +40,8 @@ export function parse(sheet){
     /* note detect mode :   c d e f g a h; cb c# ; cdc ebdbc f#gh ;   pause detect : p  */
     else if ('cdefgahp'.indexOf(c) != -1) {
       let quitNoteMode = new RegExp("[^cdefgah#bp ]");
-      quitNoteMode.lastIndex = pos;
-      next = pos + quitNoteMode.exec(sheet.slice(pos)).index;
+      quitNoteMode.lastIndex = pos;   // start scan note-adding mode sequence
+      next = pos + quitNoteMode.exec(sheet.slice(pos)).index;     // detect quit of note-adding mode
       /* buffer */
       let command = "";
       for(let i=pos; i<next; i++){
@@ -87,6 +88,13 @@ export function parse(sheet){
       }
       pos = next;
 
+    }
+    else if(c == '.'){
+      /*  dot -  last note duration x1.5  */
+      let lastDur = timings[timings.length-1].end - timings[timings.length-1].start;
+      timings[timings.length-1].end += lastDur/2;
+      time += lastDur/2;
+      pos++;
     }
     else if (!isNaN(parseInt(c))) {
       next = sheet.slice(pos).indexOf(" ");
