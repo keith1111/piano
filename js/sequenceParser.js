@@ -2,7 +2,7 @@ export function parse(sheet){
 
   let commentRegex = new RegExp('\\*.\*\?\\*', 'g');      //  remove all between    *    ...   *
   sheet = sheet.replace(commentRegex, '');
-  alert(sheet);
+
   sheet += " @";  // end
 
   let pos = 0;

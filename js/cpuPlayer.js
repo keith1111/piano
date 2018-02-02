@@ -21,6 +21,7 @@ let NOTES = {
   'hb': 11,
   'h': 12
 };
+let SILENCE_INTRO_TICKS = 4;
 
 let PROCESSING_TIME = 1; // seconds
 
@@ -42,37 +43,53 @@ function playCommands(sequenceObj) {
   let timings = sequenceObj.timings;
   let oct = 1;
   let outerTemp = getTempo();
-  let q = 60/outerTemp;     //  4th note of outer tempo in seconds
+
   let stdInnerTemp = outerTemp;
-  let currentInnerTemp = outerTemp;
+  let currentInnerTemp;
+  let currentSpeed = 1;
 
 
+  let notesCount = 0;
 
   timings = timings.map( a=> {
     return {
-      start: a.start+4,
-      end: a.end+4,
-      duration: a.end-a.start
+      duration: a.end-a.start,
+      start: a.start+SILENCE_INTRO_TICKS,
+      end: a.end+SILENCE_INTRO_TICKS
+
     }
   });
 
   let ctxTime = getTime();
   let startTime = ctxTime + PROCESSING_TIME;
 
-  let lastTact = Math.floor(timings[timings.length-1].end)+1;
-  for(let i=0; i<lastTact; i++){
-    playMetronomeSingle(startTime+i*q);
-  }
+  let breakPoints = [0];    // tacts in each tempo
+  let breakTime = [0];      // seconds when change tempo
+  let tempoZone = 0;        // increase in each tempo change
+  let q = [60/outerTemp];   //  4th note in seconds
+
+
 
   for (let i = 0; i < commands.length; i++) {
 
     if (!timings[i].duration) {
       if (commands[i].startsWith('t')) {
         let newInnerTemp = parseInt(commands[i].slice(1));
-        if(stdInnerTemp == outerTemp){
+        if(!notesCount){
           stdInnerTemp = newInnerTemp;
         }
+        if(timings[i].start > SILENCE_INTRO_TICKS){
+          let prevTempoSeconds = (timings[i].start - breakPoints[breakPoints.length-1])*q[tempoZone];
+
+          breakPoints.push(timings[i].start);
+
+          breakTime.push(breakTime[breakTime.length-1] + prevTempoSeconds);
+          tempoZone++;
+          q.push(60/(outerTemp*newInnerTemp/stdInnerTemp));
+        }
         currentInnerTemp = newInnerTemp;
+        currentSpeed = newInnerTemp/stdInnerTemp;
+
       }
       else if (commands[i].startsWith('o')) {
         let nextOct = parseInt(commands[i].slice(1));
@@ -87,16 +104,29 @@ function playCommands(sequenceObj) {
         }
       }
       else if(commands[i] == '@'){
-        soundStopCpu(startTime+timings[i].start*q);
+        soundStopCpu(startTime+ breakTime[tempoZone] +  timings[i].start*q[tempoZone]);
       }
     }
 
     else {
       let key = NOTES[commands[i]] + (oct+2) * 12;
-      soundPlayCpu(key, startTime + timings[i].start*q, timings[i].duration*q);
+      notesCount++;
+      soundPlayCpu(key, startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone], timings[i].duration*q[tempoZone]);
     }
 
   }
+
+  let lastNote = Math.floor(timings[timings.length-1].end);
+
+  breakPoints.push(lastNote);
+
+
+  for(let tzone=0; tzone<breakPoints.length ;tzone++){
+    for(let j=breakPoints[tzone]; j<breakPoints[tzone+1]; j++){
+      playMetronomeSingle(startTime+breakTime[tzone]+(j-breakPoints[tzone])*q[tzone]);
+    }
+  }
+
 
 
 
