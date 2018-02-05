@@ -129,4 +129,15 @@ body {
     top: calc(100px + 4vw);
     transform: rotate(-90deg); }
 
+.examples {
+  position: absolute;
+  width: 10vw;
+  height: 2vw;
+  top: calc(100px + 1vw);
+  left: 40vw; }
+
+.player .start {
+  stroke: #000000;
+  fill: #16590e; }
+
 /*# sourceMappingURL=main.css.map */

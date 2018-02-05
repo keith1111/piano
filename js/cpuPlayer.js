@@ -2,6 +2,7 @@ import {soundPlayCpu, soundStopCpu, getTempo, playMetronomeSingle, getTime} from
 import * as sequenceParser from './sequenceParser.js';
 import {examples} from './examples.js';
 
+
 let NOTES = {
   'c': 1,
   'c#': 2,
@@ -26,13 +27,14 @@ let SILENCE_INTRO_TICKS = 4;
 let PROCESSING_TIME = 1; // seconds
 
 export function init(){
-  document.querySelector(".example .start").addEventListener("click", takeNotes);
+  document.querySelector(".player .start").addEventListener("click", takeNotes);
 }
 
 
 function takeNotes() {
-  let notesString = examples[1];
 
+  let selected = document.querySelector('#examples').value;
+  let notesString = examples[selected];
   playCommands(sequenceParser.parse(notesString));
 }
 

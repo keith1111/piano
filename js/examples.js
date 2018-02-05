@@ -1,3 +1,14 @@
+export function renderExamples(){
+  let select = document.querySelector("#examples");
+  let examplesArray = [...Object.keys(examples)];
+  select.innerHTML = examplesArray.map((a,i) => {
+    return `
+      <option value="${a}">${a}</option>
+    `
+  }).join("");
+
+}
+
 export let examples = {
   '1' : '* this is a comment. Song: Bach Prelude C-moll  * ' +
   ' t132 o2 16' +

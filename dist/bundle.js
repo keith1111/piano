@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 3);
+/******/ 	return __webpack_require__(__webpack_require__.s = 4);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -80,8 +80,8 @@
 /* harmony export (immutable) */ __webpack_exports__["i"] = soundStop;
 /* harmony export (immutable) */ __webpack_exports__["h"] = soundPlayCpu;
 /* harmony export (immutable) */ __webpack_exports__["j"] = soundStopCpu;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__metronome_controls_js__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__cpuPlayer_js__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__metronome_controls_js__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__cpuPlayer_js__ = __webpack_require__(7);
 
 
 
@@ -483,11 +483,82 @@ function updateKeysSigns(){
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+/* harmony export (immutable) */ __webpack_exports__["b"] = renderExamples;
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return examples; });
+function renderExamples(){
+  let select = document.querySelector("#examples");
+  let examplesArray = [...Object.keys(examples)];
+  select.innerHTML = examplesArray.map((a,i) => {
+    return `
+      <option value="${a}">${a}</option>
+    `
+  }).join("");
+
+}
+
+let examples = {
+  '1' : '* this is a comment. Song: Bach Prelude C-moll  * ' +
+  ' t132 o2 16' +
+  ' c - eb d eb c eb d eb + c - eb d eb c eb d eb' +
+  ' ab f e f c f e f ab f e f c f e f' +
+  ' h f eb f d f eb f h f eb f d f eb f' +
+  ' + c - g f g eb g f g + c - g f g eb g f g' +
+  ' + eb - ab g ab eb ab g ab + eb - ab g ab eb ab g ab' +
+  ' + d - f# e f# d f# e f# + d - f# e f# d f# e f#' +
+  ' + d - g f# g d g f# g + d - g f# g d g f# g' +
+  ' + c - e d e c e d e + c - e d e c e d e' +
+  ' + c - f e f c f e f + c - f e f c f e f' +
+  ' hb f eb f d f eb f hb f eb f d f eb f' +
+  ' hb g f g eb g f g hb g f g eb g f g' +
+  ' ab g f g eb g f g ab g f g eb g f g' +
+  ' ab d c d - hb + d c d ab d c d - hb + d c d' +
+  ' g - hb ab hb + eb - hb ab hb + g - hb ab hb + eb - hb ab hb' +
+  ' + f c - hb + c - a + c - hb + c f c - hb + c - a + c - hb + c' +
+  ' f d c d - h + d c d f d c d - h + d c d' +
+  ' f d c d - h + d c d f d c d - h + d c d' +
+  ' eb c - h + c - g + c - h + c eb c - h + c - g + c - h + c' +
+  ' - f + eb d eb f eb d eb - f + eb d eb f eb d eb' +
+  ' - f# + c - h + c eb c - h + c - f# + c - h + c eb c - h + c' +
+  ' eb c - h + c - g + c - h + c eb c - h + c - g + c - h + c' +
+  ' f# c - h + c - a + c - h + c f# c - h + c - a + c - h + c' +
+  ' g c - h + c d c - h + c g c - h + c d c - h + c' +
+  ' ab c - h + c d c - h + c ab c - h + c d c - h + c' +
+
+  ' *  PART 2 * +' +
+  ' o-1 ' +
+  ' g h + d f ab f e f h f + d - h ab f e f ' +
+  ' o-1 ' +
+  ' g +c eb g + c -g f# g + eb c g eb c - ab g ab' +
+  'o-1 ' +
+  ' g a + f# + c + eb c - h + c f# c a f# eb c - h +c' +
+  ' *PART 3*' +
+  ' o2 p d c d eb c - h + c - a +c -h + c d - h a h' +
+  ' g h a h +c  -a g a f# a g a h g f# g' +
+  ' d +g f g ab f eb f d f eb f g eb d eb' +
+  'c eb d eb f d c d - h + dc d eb c -h +c' +
+  '- g + c - h +c - ab + f eb f - g + eb d eb - f + d c d' +
+  ' - eb +c -hb +c - ab f eb f g eb d eb f d c d ' +
+  '    *ADAGIO*     ' +
+  't60 8 e 32 ^e c d e 64 f g ab hb + c - hb ab g 32 f g e f e f 16 ^f g 32 f e f g ab g 64 f eb d eb f d eb f' +
+  ' *ALLEGRO*  ' +
+  't132 8 - h. 16 d f ab g f h f + d  -f h ab g f' +
+  ' e + db -hb g +c -ab  f ab g hb g eb ab f d f' +
+  ' e g e c f d - h +d 8 c. 16 d g hb g ' +
+  ' ab + c f d f ab +c - h +c -f gd 4 e'
+
+};
+
+/***/ }),
+/* 4 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__board_js__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__ = __webpack_require__(5);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__keymap_js__ = __webpack_require__(2);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__sound_js__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__examples_js__ = __webpack_require__(3);
 
 
 
@@ -502,6 +573,7 @@ function ready(){
   __WEBPACK_IMPORTED_MODULE_0__board_js__["a" /* enableOctaveChange */]();
   __WEBPACK_IMPORTED_MODULE_2__keymap_js__["a" /* signKeys */]();
   __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__["a" /* enableKeyboardPress */]();
+  __WEBPACK_IMPORTED_MODULE_4__examples_js__["b" /* renderExamples */]();
 
 
 }
@@ -510,7 +582,7 @@ document.addEventListener('DOMContentLoaded', ready);
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -683,7 +755,7 @@ function enableKeyboardPress(){
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -726,14 +798,15 @@ function togglePower(){
 }
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 /* harmony export (immutable) */ __webpack_exports__["a"] = init;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__sound_js__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__sequenceParser_js__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__examples_js__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__sequenceParser_js__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__examples_js__ = __webpack_require__(3);
+
 
 
 
@@ -762,13 +835,14 @@ let SILENCE_INTRO_TICKS = 4;
 let PROCESSING_TIME = 1; // seconds
 
 function init(){
-  document.querySelector(".example .start").addEventListener("click", takeNotes);
+  document.querySelector(".player .start").addEventListener("click", takeNotes);
 }
 
 
 function takeNotes() {
-  let notesString = __WEBPACK_IMPORTED_MODULE_2__examples_js__["a" /* examples */][1];
 
+  let selected = document.querySelector('#examples').value;
+  let notesString = __WEBPACK_IMPORTED_MODULE_2__examples_js__["a" /* examples */][selected];
   playCommands(__WEBPACK_IMPORTED_MODULE_1__sequenceParser_js__["a" /* parse */](notesString));
 }
 
@@ -872,7 +946,7 @@ function playCommands(sequenceObj) {
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1045,64 +1119,6 @@ function parse(sheet){
   };
 
 }
-
-/***/ }),
-/* 8 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return examples; });
-let examples = {
-  '1' : '* this is a comment. Song: Bach Prelude C-moll  * ' +
-  ' t132 o2 16' +
-  ' c - eb d eb c eb d eb + c - eb d eb c eb d eb' +
-  ' ab f e f c f e f ab f e f c f e f' +
-  ' h f eb f d f eb f h f eb f d f eb f' +
-  ' + c - g f g eb g f g + c - g f g eb g f g' +
-  ' + eb - ab g ab eb ab g ab + eb - ab g ab eb ab g ab' +
-  ' + d - f# e f# d f# e f# + d - f# e f# d f# e f#' +
-  ' + d - g f# g d g f# g + d - g f# g d g f# g' +
-  ' + c - e d e c e d e + c - e d e c e d e' +
-  ' + c - f e f c f e f + c - f e f c f e f' +
-  ' hb f eb f d f eb f hb f eb f d f eb f' +
-  ' hb g f g eb g f g hb g f g eb g f g' +
-  ' ab g f g eb g f g ab g f g eb g f g' +
-  ' ab d c d - hb + d c d ab d c d - hb + d c d' +
-  ' g - hb ab hb + eb - hb ab hb + g - hb ab hb + eb - hb ab hb' +
-  ' + f c - hb + c - a + c - hb + c f c - hb + c - a + c - hb + c' +
-  ' f d c d - h + d c d f d c d - h + d c d' +
-  ' f d c d - h + d c d f d c d - h + d c d' +
-  ' eb c - h + c - g + c - h + c eb c - h + c - g + c - h + c' +
-  ' - f + eb d eb f eb d eb - f + eb d eb f eb d eb' +
-  ' - f# + c - h + c eb c - h + c - f# + c - h + c eb c - h + c' +
-  ' eb c - h + c - g + c - h + c eb c - h + c - g + c - h + c' +
-  ' f# c - h + c - a + c - h + c f# c - h + c - a + c - h + c' +
-  ' g c - h + c d c - h + c g c - h + c d c - h + c' +
-  ' ab c - h + c d c - h + c ab c - h + c d c - h + c' +
-
-  ' *  PART 2 * +' +
-  ' o-1 ' +
-  ' g h + d f ab f e f h f + d - h ab f e f ' +
-  ' o-1 ' +
-  ' g +c eb g + c -g f# g + eb c g eb c - ab g ab' +
-  'o-1 ' +
-  ' g a + f# + c + eb c - h + c f# c a f# eb c - h +c' +
-  ' *PART 3*' +
-  ' o2 p d c d eb c - h + c - a +c -h + c d - h a h' +
-  ' g h a h +c  -a g a f# a g a h g f# g' +
-  ' d +g f g ab f eb f d f eb f g eb d eb' +
-  'c eb d eb f d c d - h + dc d eb c -h +c' +
-  '- g + c - h +c - ab + f eb f - g + eb d eb - f + d c d' +
-  ' - eb +c -hb +c - ab f eb f g eb d eb f d c d ' +
-  '    *ADAGIO*     ' +
-  't60 8 e 32 ^e c d e 64 f g ab hb + c - hb ab g 32 f g e f e f 16 ^f g 32 f e f g ab g 64 f eb d eb f d eb f' +
-  ' *ALLEGRO*  ' +
-  't132 8 - h. 16 d f ab g f h f + d  -f h ab g f' +
-  ' e + db -hb g +c -ab  f ab g hb g eb ab f d f' +
-  ' e g e c f d - h +d 8 c. 16 d g hb g ' +
-  ' ab + c f d f ab +c - h +c -f gd 4 e'
-
-};
 
 /***/ })
 /******/ ]);
