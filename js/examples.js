@@ -57,6 +57,9 @@ export let examples = {
   't132 8 - h. 16 d f ab g f h f + d  -f h ab g f' +
   ' e + db -hb g +c -ab  f ab g hb g eb ab f d f' +
   ' e g e c f d - h +d 8 c. 16 d g hb g ' +
-  ' ab + c f d f ab +c - h +c -f gd 4 e'
+  ' ab + c f d f ab +c - h +c -f gd 4 e',
+
+
+  '2': 't80 o1 16 cccccdcccc'
 
 };

@@ -109,15 +109,22 @@ let metronomeTimer;
 let metronomeOn = false;
 
 
-let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100];   // old
-//let overtones = [0, 1, .66, .25, .33, .1, .5, .12, .23, .12, .1];
+let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100, 0,0,0,0];   // old
+let overtonesLOW = [0, .089, .562, 2.818, .501, 1, .178, .355, .100, .089, .050, .022, .071, .045, .126];
+let overtones1 = [1.0, 0.399064778, 0.229404484, 0.151836061, 0.196754229, 0.093742264, 0.060871957,
+  0.138605419, 0.010535002, 0.071021868, 0.029954614, 0.051299684, 0.055948288,   0.066208224, 0.010067391, 0.00753679,
+  0.008196947, 0.012955577, 0.007316738,   0.006216476, 0.005116215, 0.006243983,
+  0.002860679, 0.002558108, 0.0, 0.001650392];
 let real = [];
+let realLOW = [];
 let imag = [];
-for(let i=0;i<overtones.length;i++){
-  real[i] = overtones[i];
+for(let i=0;i<overtones1.length;i++){
+  real[i] = overtones1[i];
+  //realLOW[i] = overtonesLOW[i];
   imag[i] = 0;
 }
 let pianoTable = ctx.createPeriodicWave(real, imag);
+
 
 function getTempo(){
   return tempo;
@@ -302,19 +309,24 @@ function envelopePress(gainChannel, time){
   let gain = gainChannel.gain;
 
   gain.cancelScheduledValues(pressTime);
-  gain.setValueAtTime(1, pressTime);
-  gain.linearRampToValueAtTime(0.7, pressTime + 0.015);
-  //gain.setValueAtTime(0.7, pressTime + 0.015);
-  //gain.exponentialRampToValueAtTime(0.001, pressTime + SUSTAIN_TIME);
-  //gain.linearRampToValueAtTime(0, pressTime + SUSTAIN_TIME+0.001);
+  gain.setValueAtTime(0, pressTime);
+  gain.linearRampToValueAtTime(1, pressTime + 0.001);
+  gain.linearRampToValueAtTime(0.75, pressTime + 0.015);
+  gain.exponentialRampToValueAtTime(0.001, pressTime + SUSTAIN_TIME);
+
 }
 
 function envelopeRelease(gainChannel, time){
   let unpressTime = time || ctx.currentTime;
   let gain = gainChannel.gain;
+
   gain.cancelScheduledValues(unpressTime);
-  gain.exponentialRampToValueAtTime(0.001, unpressTime + SUSTAIN_TIME);
-  gain.linearRampToValueAtTime(0, unpressTime + SUSTAIN_TIME+ 0.001);
+  if(!time){
+    let cur = gain.value;
+    gain.setValueAtTime(cur, unpressTime)
+  };
+  gain.setTargetAtTime(0, unpressTime, 0.15);
+
 }
 
 function soundPlay(key){
@@ -342,9 +354,6 @@ function soundStop(key){
   
   envelopeRelease(gainNode[keyNumber]);
 
-  //startedSustain[keyNumber] = ctx.currentTime;
-  //osc[keyNumber].stop(ctx.currentTime+SUSTAIN_TIME);
-
 
 }
 
@@ -362,10 +371,11 @@ function soundPlayCpu(keyNumber, time, duration){
 
 function soundStopCpu(time){
   for( let key in gainNodeCpu){
-    if(gainNodeCpu[key].gain.value > 0){
+
       envelopeRelease(gainNodeCpu[key], time);
-    }
+
   }
+
 }
 
 
@@ -555,7 +565,10 @@ let examples = {
   't132 8 - h. 16 d f ab g f h f + d  -f h ab g f' +
   ' e + db -hb g +c -ab  f ab g hb g eb ab f d f' +
   ' e g e c f d - h +d 8 c. 16 d g hb g ' +
-  ' ab + c f d f ab +c - h +c -f gd 4 e'
+  ' ab + c f d f ab +c - h +c -f gd 4 e',
+
+
+  '2': 't80 o1 16 cccccdcccc'
 
 };
 
