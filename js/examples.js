@@ -60,6 +60,6 @@ export let examples = {
   ' ab + c f d f ab +c - h +c -f gd 4 e',
 
 
-  '2': 't80 o1 16 cccccdcccc'
+  '2': 't80 o1 16 cccccccdcccdc  ccc'
 
 };

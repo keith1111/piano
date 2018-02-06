@@ -3,7 +3,7 @@ import * as cpuPlayer from './cpuPlayer.js';
 
 let STD_TUNING = 440;    // tuning A 1-st oct  std == 440Hz
 let STD_KEYNUMBER_A = 46; // place of A-note 1-st oct on piano board
-let SUSTAIN_TIME = 2;
+export let SUSTAIN_TIME = 2;
 let tempo = 70;
 
 let ctx = new AudioContext();
@@ -18,7 +18,7 @@ let volumeManualNode, whistleFilterStep1, whistleFilterStep2, compressor;   //  
 let oscCpu = {};
 let gainNodeCpu = {};
 let volumeCpu, whistleFilterCpuStep1, whistleFilterCpuStep2, compressorCpu;   //  auto sound nodes
-
+let lastPressCpu = {};
 
 let metronomeSource, metronomeGain;
 let metronomeTimer;
@@ -118,6 +118,7 @@ function initCpuSound(){
     oscCpu[keyNumber].start(0);
 
     gainNodeCpu[keyNumber] = ctx.createGain();
+    gainNodeCpu[keyNumber].keyNumber = keyNumber;
     gainNodeCpu[keyNumber].gain.setValueAtTime(0,0);
 
     oscCpu[keyNumber].connect(gainNodeCpu[keyNumber]);
@@ -223,24 +224,48 @@ function loadSample(filename, bufferProp){
 function envelopePress(gainChannel, time){
   let pressTime = time || ctx.currentTime;
   let gain = gainChannel.gain;
+  console.log(gainChannel);
+  if(lastPressCpu[gainChannel.keyNumber] && pressTime - lastPressCpu[gainChannel.keyNumber] < SUSTAIN_TIME ){
+    //envelopeRelease(gainChannel, time-0.025);
+  }
 
   gain.cancelScheduledValues(pressTime);
-  gain.setValueAtTime(0, pressTime);
-  gain.linearRampToValueAtTime(1, pressTime + 0.001);
+  gain.setValueAtTime(1, pressTime);
+  //gain.linearRampToValueAtTime(1, pressTime + 0.001);
   gain.linearRampToValueAtTime(0.75, pressTime + 0.015);
   gain.exponentialRampToValueAtTime(0.001, pressTime + SUSTAIN_TIME);
+  if(time){
+    lastPressCpu[gainChannel.keyNumber] = pressTime;
+  }
 
 }
 
 function envelopeRelease(gainChannel, time){
   let unpressTime = time || ctx.currentTime;
   let gain = gainChannel.gain;
-
   gain.cancelScheduledValues(unpressTime);
+
   if(!time){
     let cur = gain.value;
-    gain.setValueAtTime(cur, unpressTime)
-  };
+    gain.setValueAtTime(cur, unpressTime);
+  }
+  else if(time && lastPressCpu[gainChannel.keyNumber]){
+    let long = time - lastPressCpu[gainChannel.keyNumber];
+
+    if(long < SUSTAIN_TIME){
+      if(long <= 0.015){
+        let cur = 0.75 + (1 - (long/0.015))*0.25;
+        gain.setValueAtTime(cur, unpressTime);
+      }
+      else {
+        let cur = 0.75 * Math.pow(1/75 , ( (long-0.015)  / (SUSTAIN_TIME-0.015) ));
+        gain.setValueAtTime(cur, unpressTime);
+
+      }
+    }
+  }
+
+
   gain.setTargetAtTime(0, unpressTime, 0.15);
 
 }
@@ -278,7 +303,7 @@ export function soundStop(key){
 export function soundPlayCpu(keyNumber, time, duration){
 
   let stopTime = time + duration;
-  console.log(keyNumber + "   " + time + "   "+ stopTime);
+  //console.log(keyNumber + "   " + time + "   "+ stopTime);
   envelopePress(gainNodeCpu[keyNumber], time);
   envelopeRelease(gainNodeCpu[keyNumber], stopTime);
 
@@ -288,7 +313,9 @@ export function soundPlayCpu(keyNumber, time, duration){
 export function soundStopCpu(time){
   for( let key in gainNodeCpu){
 
-      envelopeRelease(gainNodeCpu[key], time);
+      if(lastPressCpu[key]){
+        envelopeRelease(gainNodeCpu[key], time);
+      }
 
   }
 
