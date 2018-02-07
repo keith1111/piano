@@ -112,7 +112,7 @@ export function parse(sheet){
     /* ignore whitespace */
     else if(c == ' '){
       pos++;
-      console.log("sp");
+
     }
 
     /*   merge note length  */
@@ -234,7 +234,7 @@ export function parse(sheet){
       commands.push("_");
       timings.push({start: time, end: time});
       pos = next+1;
-      console.log(pos);
+
     }
 
     else if(c == '@'){

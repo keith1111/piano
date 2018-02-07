@@ -224,12 +224,16 @@ function loadSample(filename, bufferProp){
 function envelopePress(gainChannel, time){
   let pressTime = time || ctx.currentTime;
   let gain = gainChannel.gain;
-
-  gain.cancelScheduledValues(pressTime);
+console.log(pressTime);
+  gain.cancelAndHoldAtTime(pressTime);
   gain.setValueAtTime(0, pressTime);
   gain.linearRampToValueAtTime(1, pressTime + 0.005);
-  gain.linearRampToValueAtTime(0.75, pressTime + 0.015);
+  gain.setValueAtTime(1, pressTime + 0.005);
+  gain.linearRampToValueAtTime(0.55, pressTime + 0.015);
+  gain.setValueAtTime(0.55, pressTime + 0.015);
+
   gain.exponentialRampToValueAtTime(0.001, pressTime + SUSTAIN_TIME);
+
   if(time){
     lastPressCpu[gainChannel.keyNumber] = pressTime;
   }
@@ -239,30 +243,32 @@ function envelopePress(gainChannel, time){
 function envelopeRelease(gainChannel, time){
   let unpressTime = time || ctx.currentTime;
   let gain = gainChannel.gain;
-  gain.cancelScheduledValues(unpressTime);
+  gain.cancelAndHoldAtTime(unpressTime);
+//console.log("              "+ unpressTime);
+//  if(!time){
+//    let cur = gain.value;
+//    gain.setValueAtTime(cur, unpressTime);
+//  }
+//  else if(time && lastPressCpu[gainChannel.keyNumber]){
+//    let long = time - lastPressCpu[gainChannel.keyNumber];
+//
+//    if(long < SUSTAIN_TIME){
+//      if(long <= 0.015){
+//        let cur = 0.55 + (1 - (long/0.015))*0.45;
+//        gain.setValueAtTime(cur, unpressTime);
+//      }
+//      else {
+//        let cur = 0.55 * Math.pow(0.001/ 0.55, ( (long-0.015)  / (SUSTAIN_TIME-0.015) ));
+//        gain.setValueAtTime(cur, unpressTime);
+//
+//      }
+//    }
+//  }else {
+//    //gain.setValue(0, unpressTime);
+//  }
 
-  if(!time){
-    let cur = gain.value;
-    gain.setValueAtTime(cur, unpressTime);
-  }
-  else if(time && lastPressCpu[gainChannel.keyNumber]){
-    let long = time - lastPressCpu[gainChannel.keyNumber];
-
-    if(long < SUSTAIN_TIME){
-      if(long <= 0.015){
-        let cur = 0.75 + (1 - (long/0.015))*0.25;
-        gain.setValueAtTime(cur, unpressTime);
-      }
-      else {
-        let cur = 0.75 * Math.pow(1/75 , ( (long-0.015)  / (SUSTAIN_TIME-0.015) ));
-        gain.setValueAtTime(cur, unpressTime);
-
-      }
-    }
-  }
-
-
-  gain.setTargetAtTime(0, unpressTime, 0.15);
+  //gain.exponentialRampToValueAtTime(0.001, unpressTime + SUSTAIN_TIME);
+  gain.setTargetAtTime(0, unpressTime, SUSTAIN_TIME/ Math.log(0.55/0.001));
 
 }
 
@@ -299,7 +305,7 @@ export function soundStop(key){
 export function soundPlayCpu(keyNumber, time, duration){
 
   let stopTime = time + duration;
-console.log(keyNumber, time, duration);
+
   envelopePress(gainNodeCpu[keyNumber], time);
   envelopeRelease(gainNodeCpu[keyNumber], stopTime);
 

@@ -309,12 +309,16 @@ function loadSample(filename, bufferProp){
 function envelopePress(gainChannel, time){
   let pressTime = time || ctx.currentTime;
   let gain = gainChannel.gain;
-
-  gain.cancelScheduledValues(pressTime);
+console.log(pressTime);
+  gain.cancelAndHoldAtTime(pressTime);
   gain.setValueAtTime(0, pressTime);
   gain.linearRampToValueAtTime(1, pressTime + 0.005);
-  gain.linearRampToValueAtTime(0.75, pressTime + 0.015);
+  gain.setValueAtTime(1, pressTime + 0.005);
+  gain.linearRampToValueAtTime(0.55, pressTime + 0.015);
+  gain.setValueAtTime(0.55, pressTime + 0.015);
+
   gain.exponentialRampToValueAtTime(0.001, pressTime + SUSTAIN_TIME);
+
   if(time){
     lastPressCpu[gainChannel.keyNumber] = pressTime;
   }
@@ -324,30 +328,32 @@ function envelopePress(gainChannel, time){
 function envelopeRelease(gainChannel, time){
   let unpressTime = time || ctx.currentTime;
   let gain = gainChannel.gain;
-  gain.cancelScheduledValues(unpressTime);
+  gain.cancelAndHoldAtTime(unpressTime);
+//console.log("              "+ unpressTime);
+//  if(!time){
+//    let cur = gain.value;
+//    gain.setValueAtTime(cur, unpressTime);
+//  }
+//  else if(time && lastPressCpu[gainChannel.keyNumber]){
+//    let long = time - lastPressCpu[gainChannel.keyNumber];
+//
+//    if(long < SUSTAIN_TIME){
+//      if(long <= 0.015){
+//        let cur = 0.55 + (1 - (long/0.015))*0.45;
+//        gain.setValueAtTime(cur, unpressTime);
+//      }
+//      else {
+//        let cur = 0.55 * Math.pow(0.001/ 0.55, ( (long-0.015)  / (SUSTAIN_TIME-0.015) ));
+//        gain.setValueAtTime(cur, unpressTime);
+//
+//      }
+//    }
+//  }else {
+//    //gain.setValue(0, unpressTime);
+//  }
 
-  if(!time){
-    let cur = gain.value;
-    gain.setValueAtTime(cur, unpressTime);
-  }
-  else if(time && lastPressCpu[gainChannel.keyNumber]){
-    let long = time - lastPressCpu[gainChannel.keyNumber];
-
-    if(long < SUSTAIN_TIME){
-      if(long <= 0.015){
-        let cur = 0.75 + (1 - (long/0.015))*0.25;
-        gain.setValueAtTime(cur, unpressTime);
-      }
-      else {
-        let cur = 0.75 * Math.pow(1/75 , ( (long-0.015)  / (SUSTAIN_TIME-0.015) ));
-        gain.setValueAtTime(cur, unpressTime);
-
-      }
-    }
-  }
-
-
-  gain.setTargetAtTime(0, unpressTime, 0.15);
+  //gain.exponentialRampToValueAtTime(0.001, unpressTime + SUSTAIN_TIME);
+  gain.setTargetAtTime(0, unpressTime, SUSTAIN_TIME/ Math.log(0.55/0.001));
 
 }
 
@@ -384,7 +390,7 @@ function soundStop(key){
 function soundPlayCpu(keyNumber, time, duration){
 
   let stopTime = time + duration;
-console.log(keyNumber, time, duration);
+
   envelopePress(gainNodeCpu[keyNumber], time);
   envelopeRelease(gainNodeCpu[keyNumber], stopTime);
 
@@ -543,7 +549,7 @@ function renderExamples(){
 
 let examples = {
   '1' : '* this is a comment. Song: Bach Prelude C-moll  * ' +
-  ' t132 o2 4' +
+  ' t132 o2 16' +
   ' c - eb d eb c eb d eb + c - eb d eb c eb d eb' +
   ' ab f e f c f e f ab f e f c f e f' +
   ' h f eb f d f eb f h f eb f d f eb f' +
@@ -592,7 +598,9 @@ let examples = {
   ' ab + c f d f ab +c - h +c -f gd 4 e',
 
 
-  '2': 't80 o1 2 _c e g_  _c e g_ _ a +c e_ _ a +c e_ _d f a_ _d f a_ _g h +d_ _g h +d_'
+  '2': 't80 o1 4 _c e g_  _c e g_ _ a +c e_ _ a +c e_ _d f a_ _d f a_ _g h +d_ _g h +d_',
+
+  '3' : 't60 o1 4 cccc'
 
 };
 
@@ -1160,7 +1168,7 @@ function parse(sheet){
     /* ignore whitespace */
     else if(c == ' '){
       pos++;
-      console.log("sp");
+
     }
 
     /*   merge note length  */
@@ -1282,7 +1290,7 @@ function parse(sheet){
       commands.push("_");
       timings.push({start: time, end: time});
       pos = next+1;
-      console.log(pos);
+
     }
 
     else if(c == '@'){
