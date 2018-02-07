@@ -309,14 +309,10 @@ function loadSample(filename, bufferProp){
 function envelopePress(gainChannel, time){
   let pressTime = time || ctx.currentTime;
   let gain = gainChannel.gain;
-  console.log(gainChannel);
-  if(lastPressCpu[gainChannel.keyNumber] && pressTime - lastPressCpu[gainChannel.keyNumber] < SUSTAIN_TIME ){
-    //envelopeRelease(gainChannel, time-0.025);
-  }
 
   gain.cancelScheduledValues(pressTime);
-  gain.setValueAtTime(1, pressTime);
-  //gain.linearRampToValueAtTime(1, pressTime + 0.001);
+  gain.setValueAtTime(0, pressTime);
+  gain.linearRampToValueAtTime(1, pressTime + 0.005);
   gain.linearRampToValueAtTime(0.75, pressTime + 0.015);
   gain.exponentialRampToValueAtTime(0.001, pressTime + SUSTAIN_TIME);
   if(time){
@@ -388,7 +384,7 @@ function soundStop(key){
 function soundPlayCpu(keyNumber, time, duration){
 
   let stopTime = time + duration;
-  //console.log(keyNumber + "   " + time + "   "+ stopTime);
+console.log(keyNumber, time, duration);
   envelopePress(gainNodeCpu[keyNumber], time);
   envelopeRelease(gainNodeCpu[keyNumber], stopTime);
 
@@ -547,7 +543,7 @@ function renderExamples(){
 
 let examples = {
   '1' : '* this is a comment. Song: Bach Prelude C-moll  * ' +
-  ' t132 o2 16' +
+  ' t132 o2 4' +
   ' c - eb d eb c eb d eb + c - eb d eb c eb d eb' +
   ' ab f e f c f e f ab f e f c f e f' +
   ' h f eb f d f eb f h f eb f d f eb f' +
@@ -596,7 +592,7 @@ let examples = {
   ' ab + c f d f ab +c - h +c -f gd 4 e',
 
 
-  '2': 't80 o1 16 cccccccdcccdc  ccc'
+  '2': 't80 o1 2 _c e g_  _c e g_ _ a +c e_ _ a +c e_ _d f a_ _d f a_ _g h +d_ _g h +d_'
 
 };
 
@@ -937,6 +933,7 @@ function playCommands(sequenceObj) {
   for (let i = 0; i < commands.length; i++) {
 
     if (!timings[i].duration) {
+      /* tempo change */
       if (commands[i].startsWith('t')) {
         let newInnerTemp = parseInt(commands[i].slice(1));
         if(!notesCount){
@@ -955,6 +952,7 @@ function playCommands(sequenceObj) {
         currentSpeed = newInnerTemp/stdInnerTemp;
 
       }
+      /* octave change */
       else if (commands[i].startsWith('o')) {
         let nextOct = parseInt(commands[i].slice(1));
         if (!isNaN(nextOct)) {
@@ -967,6 +965,42 @@ function playCommands(sequenceObj) {
           oct++;
         }
       }
+      /* chord mode */
+      else if(commands[i] == '_'){
+        let chordOct = oct;
+        while(true){
+          i++;
+          if(commands[i] == '_'){
+            break;
+          }
+          while(!NOTES[commands[i]]){
+            if(commands[i].startsWith('+')){
+              chordOct++;
+            }
+            else if(commands[i].startsWith('-')) {
+              chordOct--;
+            }
+            else {
+              console.log("unknown command");
+              break;
+            }
+            commands[i] = commands[i].slice(1);
+          }
+          let key = NOTES[commands[i]] + (chordOct+2) * 12;
+          notesCount++;
+
+          let fingerRaiseTime = 0.04;
+          if(keyEnd[key] && keyEnd[key] >= timings[i].start){      // duplicate note
+            fingerRaiseTime = 0.08;
+          }
+
+          keyEnd[key] = timings[i].end + qSustain;
+          Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["i" /* soundPlayCpu */])(key, startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone], timings[i].duration*q[tempoZone] - fingerRaiseTime);
+
+
+        }
+
+      }
       else if(commands[i] == '@'){
         Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["k" /* soundStopCpu */])(startTime+ breakTime[tempoZone] +  timings[i].start*q[tempoZone]);
       }
@@ -975,12 +1009,12 @@ function playCommands(sequenceObj) {
     else {
       let key = NOTES[commands[i]] + (oct+2) * 12;
       notesCount++;
-      console.log(keyEnd);
+
       let fingerRaiseTime = 0.04;
       if(keyEnd[key] && keyEnd[key] >= timings[i].start){      // duplicate note
         fingerRaiseTime = 0.08;
       }
-      console.log(key, timings[i].start);
+
       keyEnd[key] = timings[i].end + qSustain;
       Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["i" /* soundPlayCpu */])(key, startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone], timings[i].duration*q[tempoZone] - fingerRaiseTime);
     }
@@ -1029,6 +1063,7 @@ function parse(sheet){
 
   while(true) {
     let c = sheet[pos];
+
     /*    tempo change , octave change :     t60  o2     */
     if (c == "t" || c == 'o') {
       next = sheet.slice(pos).indexOf(" ");
@@ -1039,18 +1074,21 @@ function parse(sheet){
       commands.push(command);
       pos += next+1;
     }
+
     /*  1 octave down    :     -    */
     else if (c == '-') {
       timings.push({start: time, end: time});
       commands.push('o-');
       pos ++;
     }
+
     /*  1 octave up    :     +     */
     else if (c == '+') {
       timings.push({start: time, end: time});
       commands.push('o+');
       pos ++;
     }
+
     /* note detect mode :   c d e f g a h; cb c# ; cdc ebdbc f#gh ;   pause detect : p  */
     else if ('cdefgahp'.indexOf(c) != -1) {
       let quitNoteMode = new RegExp("[^cdefgah#bp ]");
@@ -1103,8 +1141,10 @@ function parse(sheet){
       pos = next;
 
     }
+
+    /*  dot -  last note duration x1.5  */
     else if(c == '.'){
-      /*  dot -  last note duration x1.5  */
+
       let lastDur = timings[timings.length-1].end - timings[timings.length-1].start;
       timings[timings.length-1].end += lastDur/2;
       time += lastDur/2;
@@ -1116,10 +1156,13 @@ function parse(sheet){
       dur = newDur;
       pos += next+1;
     }
+
     /* ignore whitespace */
     else if(c == ' '){
       pos++;
+      console.log("sp");
     }
+
     /*   merge note length  */
     else if (c == '^'){
       let noteToFind = '';
@@ -1151,6 +1194,95 @@ function parse(sheet){
       timings[noteIndex].end = time;
 
       pos = currentPos;
+    }
+
+    /*   enter chord mode   */
+    else if (c == '_'){
+      console.log(pos);
+      function octaveModifier(note){
+        let [modifier, k] = octaveChange >= 0 ? ["+", 1] : ["-",-1];
+        let newNote = note;
+        for(let i=0; i<Math.abs(octaveChange);i++){
+          newNote = modifier + newNote;
+        }
+        octaveChange = 0;
+        return newNote;
+
+      }
+
+      let next = pos + sheet.slice(pos+1).indexOf('_')+1;    // chord mode exit
+      let chord = [];      // to push notes
+      let octaveChange = 0;
+      console.log(sheet.slice(pos+1));
+      //console.log(sheet.slice(pos+1, next));
+      let note = "";
+
+      for(let i=pos+1; i<next; i++){
+
+
+
+        if('cdefgah'.indexOf(sheet[i]) != -1){
+          if(!note){
+            /* buffer empty - add note */
+            note = sheet[i];
+          }else{
+            /* note already exists in buffer  - add to chord, clear buffer, look new note  */
+            chord.push(octaveModifier(note));
+            //timings.push({start: time, end: time + 4 / dur});
+            note = sheet[i];
+          }
+        }
+        else if (note && '#b'.indexOf(sheet[i]) != -1){
+          /* note already exists in buffer - apply halftone up/down, add note to chord, clear buffer, ready for next note  */
+          note += sheet[i];
+          chord.push(octaveModifier(note));
+          //timings.push({start: time, end: time + 4 / dur});
+          note = "";
+        }
+        else if(sheet[i] == '+'){
+          if(note){
+            chord.push(octaveModifier(note));
+            note = "";
+          }
+          octaveChange++;
+
+        }
+        else if(sheet[i] == '-'){
+          if(note){
+            chord.push(octaveModifier(note));
+            note = "";
+          }
+          octaveChange--;
+        }
+
+
+        else if (sheet[i] != ' '){
+          /*  error  */
+          console.log("Unknown command:" + sheet[i]);
+          console.log(sheet.slice(pos, pos+10));
+          commands.push("@");
+          timings.push({start:time, end:time});
+          break;
+        }
+        if(i == next-1 && note){
+          chord.push(note);
+        }
+
+      }
+      /* enter chord mode in player */
+      commands.push("_");
+      timings.push({start: time, end: time});
+      for(let i=0; i<chord.length;i++){
+        commands.push(chord[i]);
+        timings.push({start: time, end: time + 4/dur});
+      }
+
+      /* exit chord mode in player */
+      time += 4/dur;
+      commands.push("_");
+      timings.push({start: time, end: time});
+      pos = next+1;
+      console.log(pos);
     }
 
     else if(c == '@'){

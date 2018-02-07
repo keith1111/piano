@@ -224,14 +224,10 @@ function loadSample(filename, bufferProp){
 function envelopePress(gainChannel, time){
   let pressTime = time || ctx.currentTime;
   let gain = gainChannel.gain;
-  console.log(gainChannel);
-  if(lastPressCpu[gainChannel.keyNumber] && pressTime - lastPressCpu[gainChannel.keyNumber] < SUSTAIN_TIME ){
-    //envelopeRelease(gainChannel, time-0.025);
-  }
 
   gain.cancelScheduledValues(pressTime);
-  gain.setValueAtTime(1, pressTime);
-  //gain.linearRampToValueAtTime(1, pressTime + 0.001);
+  gain.setValueAtTime(0, pressTime);
+  gain.linearRampToValueAtTime(1, pressTime + 0.005);
   gain.linearRampToValueAtTime(0.75, pressTime + 0.015);
   gain.exponentialRampToValueAtTime(0.001, pressTime + SUSTAIN_TIME);
   if(time){
@@ -303,7 +299,7 @@ export function soundStop(key){
 export function soundPlayCpu(keyNumber, time, duration){
 
   let stopTime = time + duration;
-  //console.log(keyNumber + "   " + time + "   "+ stopTime);
+console.log(keyNumber, time, duration);
   envelopePress(gainNodeCpu[keyNumber], time);
   envelopeRelease(gainNodeCpu[keyNumber], stopTime);
 

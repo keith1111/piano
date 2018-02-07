@@ -15,6 +15,7 @@ export function parse(sheet){
 
   while(true) {
     let c = sheet[pos];
+
     /*    tempo change , octave change :     t60  o2     */
     if (c == "t" || c == 'o') {
       next = sheet.slice(pos).indexOf(" ");
@@ -25,18 +26,21 @@ export function parse(sheet){
       commands.push(command);
       pos += next+1;
     }
+
     /*  1 octave down    :     -    */
     else if (c == '-') {
       timings.push({start: time, end: time});
       commands.push('o-');
       pos ++;
     }
+
     /*  1 octave up    :     +     */
     else if (c == '+') {
       timings.push({start: time, end: time});
       commands.push('o+');
       pos ++;
     }
+
     /* note detect mode :   c d e f g a h; cb c# ; cdc ebdbc f#gh ;   pause detect : p  */
     else if ('cdefgahp'.indexOf(c) != -1) {
       let quitNoteMode = new RegExp("[^cdefgah#bp ]");
@@ -89,8 +93,10 @@ export function parse(sheet){
       pos = next;
 
     }
+
+    /*  dot -  last note duration x1.5  */
     else if(c == '.'){
-      /*  dot -  last note duration x1.5  */
+
       let lastDur = timings[timings.length-1].end - timings[timings.length-1].start;
       timings[timings.length-1].end += lastDur/2;
       time += lastDur/2;
@@ -102,10 +108,13 @@ export function parse(sheet){
       dur = newDur;
       pos += next+1;
     }
+
     /* ignore whitespace */
     else if(c == ' '){
       pos++;
+      console.log("sp");
     }
+
     /*   merge note length  */
     else if (c == '^'){
       let noteToFind = '';
@@ -137,6 +146,95 @@ export function parse(sheet){
       timings[noteIndex].end = time;
 
       pos = currentPos;
+    }
+
+    /*   enter chord mode   */
+    else if (c == '_'){
+      console.log(pos);
+      function octaveModifier(note){
+        let [modifier, k] = octaveChange >= 0 ? ["+", 1] : ["-",-1];
+        let newNote = note;
+        for(let i=0; i<Math.abs(octaveChange);i++){
+          newNote = modifier + newNote;
+        }
+        octaveChange = 0;
+        return newNote;
+
+      }
+
+      let next = pos + sheet.slice(pos+1).indexOf('_')+1;    // chord mode exit
+      let chord = [];      // to push notes
+      let octaveChange = 0;
+      console.log(sheet.slice(pos+1));
+      //console.log(sheet.slice(pos+1, next));
+      let note = "";
+
+      for(let i=pos+1; i<next; i++){
+
+
+
+        if('cdefgah'.indexOf(sheet[i]) != -1){
+          if(!note){
+            /* buffer empty - add note */
+            note = sheet[i];
+          }else{
+            /* note already exists in buffer  - add to chord, clear buffer, look new note  */
+            chord.push(octaveModifier(note));
+            //timings.push({start: time, end: time + 4 / dur});
+            note = sheet[i];
+          }
+        }
+        else if (note && '#b'.indexOf(sheet[i]) != -1){
+          /* note already exists in buffer - apply halftone up/down, add note to chord, clear buffer, ready for next note  */
+          note += sheet[i];
+          chord.push(octaveModifier(note));
+          //timings.push({start: time, end: time + 4 / dur});
+          note = "";
+        }
+        else if(sheet[i] == '+'){
+          if(note){
+            chord.push(octaveModifier(note));
+            note = "";
+          }
+          octaveChange++;
+
+        }
+        else if(sheet[i] == '-'){
+          if(note){
+            chord.push(octaveModifier(note));
+            note = "";
+          }
+          octaveChange--;
+        }
+
+
+        else if (sheet[i] != ' '){
+          /*  error  */
+          console.log("Unknown command:" + sheet[i]);
+          console.log(sheet.slice(pos, pos+10));
+          commands.push("@");
+          timings.push({start:time, end:time});
+          break;
+        }
+        if(i == next-1 && note){
+          chord.push(note);
+        }
+
+      }
+      /* enter chord mode in player */
+      commands.push("_");
+      timings.push({start: time, end: time});
+      for(let i=0; i<chord.length;i++){
+        commands.push(chord[i]);
+        timings.push({start: time, end: time + 4/dur});
+      }
+
+      /* exit chord mode in player */
+      time += 4/dur;
+      commands.push("_");
+      timings.push({start: time, end: time});
+      pos = next+1;
+      console.log(pos);
     }
 
     else if(c == '@'){
