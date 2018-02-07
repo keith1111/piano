@@ -1,4 +1,4 @@
-import {soundPlayCpu, soundStopCpu, getTempo, playMetronomeSingle, getTime} from './sound.js';
+import {soundPlayCpu, soundStopCpu, getTempo, playMetronomeSingle, getTime, SUSTAIN_TIME} from './sound.js';
 import * as sequenceParser from './sequenceParser.js';
 import {examples} from './examples.js';
 
@@ -26,6 +26,7 @@ let SILENCE_INTRO_TICKS = 4;
 
 let PROCESSING_TIME = 1; // seconds
 
+
 export function init(){
   document.querySelector(".player .start").addEventListener("click", takeNotes);
 }
@@ -46,11 +47,12 @@ function playCommands(sequenceObj) {
   let oct = 1;
   let outerTemp = getTempo();
 
+
   let stdInnerTemp = outerTemp;
   let currentInnerTemp;
   let currentSpeed = 1;
 
-
+  let keyEnd = {};
   let notesCount = 0;
 
   timings = timings.map( a=> {
@@ -69,12 +71,13 @@ function playCommands(sequenceObj) {
   let breakTime = [0];      // seconds when change tempo
   let tempoZone = 0;        // increase in each tempo change
   let q = [60/outerTemp];   //  4th note in seconds
-
+  let qSustain = SUSTAIN_TIME/q;
 
 
   for (let i = 0; i < commands.length; i++) {
 
     if (!timings[i].duration) {
+      /* tempo change */
       if (commands[i].startsWith('t')) {
         let newInnerTemp = parseInt(commands[i].slice(1));
         if(!notesCount){
@@ -93,6 +96,7 @@ function playCommands(sequenceObj) {
         currentSpeed = newInnerTemp/stdInnerTemp;
 
       }
+      /* octave change */
       else if (commands[i].startsWith('o')) {
         let nextOct = parseInt(commands[i].slice(1));
         if (!isNaN(nextOct)) {
@@ -105,6 +109,42 @@ function playCommands(sequenceObj) {
           oct++;
         }
       }
+      /* chord mode */
+      else if(commands[i] == '_'){
+        let chordOct = oct;
+        while(true){
+          i++;
+          if(commands[i] == '_'){
+            break;
+          }
+          while(!NOTES[commands[i]]){
+            if(commands[i].startsWith('+')){
+              chordOct++;
+            }
+            else if(commands[i].startsWith('-')) {
+              chordOct--;
+            }
+            else {
+              console.log("unknown command");
+              break;
+            }
+            commands[i] = commands[i].slice(1);
+          }
+          let key = NOTES[commands[i]] + (chordOct+2) * 12;
+          notesCount++;
+
+          let fingerRaiseTime = 0.04;
+          if(keyEnd[key] && keyEnd[key] >= timings[i].start){      // duplicate note
+            fingerRaiseTime = 0.08;
+          }
+
+          keyEnd[key] = timings[i].end + qSustain;
+          soundPlayCpu(key, startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone], timings[i].duration*q[tempoZone] - fingerRaiseTime);
+
+
+        }
+
+      }
       else if(commands[i] == '@'){
         soundStopCpu(startTime+ breakTime[tempoZone] +  timings[i].start*q[tempoZone]);
       }
@@ -113,7 +153,14 @@ function playCommands(sequenceObj) {
     else {
       let key = NOTES[commands[i]] + (oct+2) * 12;
       notesCount++;
-      soundPlayCpu(key, startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone], timings[i].duration*q[tempoZone]);
+
+      let fingerRaiseTime = 0.04;
+      if(keyEnd[key] && keyEnd[key] >= timings[i].start){      // duplicate note
+        fingerRaiseTime = 0.08;
+      }
+
+      keyEnd[key] = timings[i].end + qSustain;
+      soundPlayCpu(key, startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone], timings[i].duration*q[tempoZone] - fingerRaiseTime);
     }
 
   }

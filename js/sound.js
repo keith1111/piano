@@ -3,7 +3,7 @@ import * as cpuPlayer from './cpuPlayer.js';
 
 let STD_TUNING = 440;    // tuning A 1-st oct  std == 440Hz
 let STD_KEYNUMBER_A = 46; // place of A-note 1-st oct on piano board
-let SUSTAIN_TIME = 2;
+export let SUSTAIN_TIME = 2;
 let tempo = 70;
 
 let ctx = new AudioContext();
@@ -12,28 +12,35 @@ let destination = ctx.destination;;
 let osc = {};  //for 84 keys
 let gainNode = {};
 let volumeManualNode, whistleFilterStep1, whistleFilterStep2, compressor;   //  manual sound nodes
-let startedSustain = {};
+
 
 
 let oscCpu = {};
 let gainNodeCpu = {};
 let volumeCpu, whistleFilterCpuStep1, whistleFilterCpuStep2, compressorCpu;   //  auto sound nodes
-let startedSustainCpu = {};
+let lastPressCpu = {};
 
 let metronomeSource, metronomeGain;
 let metronomeTimer;
 let metronomeOn = false;
 
 
-let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100];   // old
-//let overtones = [0, 1, .66, .25, .33, .1, .5, .12, .23, .12, .1];
+let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100, 0,0,0,0];   // old
+let overtonesLOW = [0, .089, .562, 2.818, .501, 1, .178, .355, .100, .089, .050, .022, .071, .045, .126];
+let overtones1 = [1.0, 0.399064778, 0.229404484, 0.151836061, 0.196754229, 0.093742264, 0.060871957,
+  0.138605419, 0.010535002, 0.071021868, 0.029954614, 0.051299684, 0.055948288,   0.066208224, 0.010067391, 0.00753679,
+  0.008196947, 0.012955577, 0.007316738,   0.006216476, 0.005116215, 0.006243983,
+  0.002860679, 0.002558108, 0.0, 0.001650392];
 let real = [];
+let realLOW = [];
 let imag = [];
-for(let i=0;i<overtones.length;i++){
-  real[i] = overtones[i];
+for(let i=0;i<overtones1.length;i++){
+  real[i] = overtones1[i];
+  //realLOW[i] = overtonesLOW[i];
   imag[i] = 0;
 }
 let pianoTable = ctx.createPeriodicWave(real, imag);
+
 
 export function getTempo(){
   return tempo;
@@ -48,8 +55,26 @@ export function getTime(){
 }
 
 function initManualSound(){
+  // (84 x (osc -> gain)  )   ->   volumeManualNode ->  filter1 -> filter2 -> compressor -> output
+
   volumeManualNode = ctx.createGain();
   volumeManualNode.gain.setValueAtTime(1,0);
+
+  for(let keyNumber=1; keyNumber<=84;keyNumber++){
+    let diffHalftones = keyNumber - STD_KEYNUMBER_A;
+    let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
+    osc[keyNumber] = ctx.createOscillator();
+    osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
+    osc[keyNumber].setPeriodicWave(pianoTable);
+    osc[keyNumber].keyNumber = keyNumber;
+    osc[keyNumber].start(0);
+
+    gainNode[keyNumber] = ctx.createGain();
+    gainNode[keyNumber].gain.setValueAtTime(0,0);
+
+    osc[keyNumber].connect(gainNode[keyNumber]);
+    gainNode[keyNumber].connect(volumeManualNode);
+  }
 
   whistleFilterStep1 = ctx.createBiquadFilter();
   whistleFilterStep1.type = 'highshelf';
@@ -77,10 +102,28 @@ function initManualSound(){
 }
 
 function initCpuSound(){
+  // launches after init metronome
   cpuPlayer.init();
 
   volumeCpu = ctx.createGain();
   volumeCpu.gain.setValueAtTime(1,0);
+
+  for(let keyNumber=1; keyNumber<=84;keyNumber++){
+    let diffHalftones = keyNumber - STD_KEYNUMBER_A;
+    let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
+    oscCpu[keyNumber] = ctx.createOscillator();
+    oscCpu[keyNumber].frequency.setValueAtTime(toneHz, 0);
+    oscCpu[keyNumber].setPeriodicWave(pianoTable);
+    oscCpu[keyNumber].keyNumber = keyNumber;
+    oscCpu[keyNumber].start(0);
+
+    gainNodeCpu[keyNumber] = ctx.createGain();
+    gainNodeCpu[keyNumber].keyNumber = keyNumber;
+    gainNodeCpu[keyNumber].gain.setValueAtTime(0,0);
+
+    oscCpu[keyNumber].connect(gainNodeCpu[keyNumber]);
+    gainNodeCpu[keyNumber].connect(volumeCpu);
+  }
 
   whistleFilterCpuStep1 = ctx.createBiquadFilter();
   whistleFilterCpuStep1.type = 'highshelf';
@@ -112,8 +155,6 @@ export function initMetronome(){
   metronomeControls.init();
   initCpuSound();
 }
-
-
 
 export function startMetronome(){
 
@@ -180,39 +221,54 @@ function loadSample(filename, bufferProp){
   req.send();
 }
 
-function resetSustain(e){
-  //console.log(ctx.currentTime - startedSustain[e.target.keyNumber]);
-  startedSustain[e.target.keyNumber] = 0;
+function envelopePress(gainChannel, time){
+  let pressTime = time || ctx.currentTime;
+  let gain = gainChannel.gain;
+console.log(pressTime);
+  gain.cancelAndHoldAtTime(pressTime);
+  gain.setValueAtTime(0, pressTime);
+  gain.linearRampToValueAtTime(1, pressTime + 0.005);
+  gain.setValueAtTime(1, pressTime + 0.005);
+  gain.linearRampToValueAtTime(0.55, pressTime + 0.015);
+  gain.setValueAtTime(0.55, pressTime + 0.015);
+
+  gain.exponentialRampToValueAtTime(0.001, pressTime + SUSTAIN_TIME);
+
+  if(time){
+    lastPressCpu[gainChannel.keyNumber] = pressTime;
+  }
+
 }
 
-function generateManualSound(keyNumber){
+function envelopeRelease(gainChannel, time){
+  let unpressTime = time || ctx.currentTime;
+  let gain = gainChannel.gain;
+  gain.cancelAndHoldAtTime(unpressTime);
+//console.log("              "+ unpressTime);
+//  if(!time){
+//    let cur = gain.value;
+//    gain.setValueAtTime(cur, unpressTime);
+//  }
+//  else if(time && lastPressCpu[gainChannel.keyNumber]){
+//    let long = time - lastPressCpu[gainChannel.keyNumber];
+//
+//    if(long < SUSTAIN_TIME){
+//      if(long <= 0.015){
+//        let cur = 0.55 + (1 - (long/0.015))*0.45;
+//        gain.setValueAtTime(cur, unpressTime);
+//      }
+//      else {
+//        let cur = 0.55 * Math.pow(0.001/ 0.55, ( (long-0.015)  / (SUSTAIN_TIME-0.015) ));
+//        gain.setValueAtTime(cur, unpressTime);
+//
+//      }
+//    }
+//  }else {
+//    //gain.setValue(0, unpressTime);
+//  }
 
-  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
-  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
-
-  if(startedSustain[keyNumber]){
-    osc[keyNumber].disconnect();
-  }
-
-  osc[keyNumber] = ctx.createOscillator();
-  osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
-  osc[keyNumber].setPeriodicWave(pianoTable);
-
-  osc[keyNumber].onended = resetSustain;
-  osc[keyNumber].keyNumber = keyNumber;
-
-  gainNode[keyNumber] = ctx.createGain();
-  gainNode[keyNumber].gain.setValueAtTime(1,0);
-  if(!volumeManualNode){
-    initManualSound();
-  }
-
-  gainNode[keyNumber].connect(volumeManualNode);
-
-  osc[keyNumber].connect(gainNode[keyNumber]);
-  gainNode[keyNumber].gain.linearRampToValueAtTime(0, ctx.currentTime + SUSTAIN_TIME);
-  osc[keyNumber].start(0);
-
+  //gain.exponentialRampToValueAtTime(0.001, unpressTime + SUSTAIN_TIME);
+  gain.setTargetAtTime(0, unpressTime, SUSTAIN_TIME/ Math.log(0.55/0.001));
 
 }
 
@@ -222,7 +278,14 @@ export function soundPlay(key){
   let oct = +key.parentElement.dataset.oct+2;
   let keyNumber = oct*12+keyTone;
 
-  generateManualSound(keyNumber);
+  if(!volumeManualNode){
+    initManualSound();
+  }
+
+
+  envelopePress(gainNode[keyNumber]);
+
+
 
 
 }
@@ -232,12 +295,7 @@ export function soundStop(key){
   let oct = +key.parentElement.dataset.oct+2;
   let keyNumber = oct*12+keyTone;
   
-  if(!osc[keyNumber]){
-    return;
-  }
-
-  startedSustain[keyNumber] = ctx.currentTime;
-  osc[keyNumber].stop(ctx.currentTime+SUSTAIN_TIME);
+  envelopeRelease(gainNode[keyNumber]);
 
 
 }
@@ -245,32 +303,24 @@ export function soundStop(key){
 
 
 export function soundPlayCpu(keyNumber, time, duration){
-  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
-  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
+
+  let stopTime = time + duration;
+
+  envelopePress(gainNodeCpu[keyNumber], time);
+  envelopeRelease(gainNodeCpu[keyNumber], stopTime);
 
 
-  oscCpu[keyNumber] = ctx.createOscillator();
-  oscCpu[keyNumber].frequency.setValueAtTime(toneHz, 0);
-  oscCpu[keyNumber].setPeriodicWave(pianoTable);
-
- // oscCpu[keyNumber].onended = endCpuSound(keyNumber);
-
-  gainNodeCpu[keyNumber] = ctx.createGain();
-  gainNodeCpu[keyNumber].gain.setValueAtTime(1,time);
-
-  gainNodeCpu[keyNumber].connect(volumeCpu);
-
-  oscCpu[keyNumber].connect(gainNodeCpu[keyNumber]);
-  gainNodeCpu[keyNumber].gain.linearRampToValueAtTime(0, time + duration + SUSTAIN_TIME/4);
-
-  oscCpu[keyNumber].start(time);
-  oscCpu[keyNumber].stop(time+duration+SUSTAIN_TIME/4);
 }
 
 export function soundStopCpu(time){
-  for( let key in oscCpu){
-    oscCpu[key].stop(time + SUSTAIN_TIME);
+  for( let key in gainNodeCpu){
+
+      if(lastPressCpu[key]){
+        envelopeRelease(gainNodeCpu[key], time);
+      }
+
   }
+
 }
 
 

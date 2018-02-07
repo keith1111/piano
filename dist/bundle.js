@@ -68,18 +68,19 @@
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony export (immutable) */ __webpack_exports__["b"] = getTempo;
-/* harmony export (immutable) */ __webpack_exports__["f"] = setTempo;
-/* harmony export (immutable) */ __webpack_exports__["c"] = getTime;
-/* harmony export (immutable) */ __webpack_exports__["d"] = initMetronome;
-/* harmony export (immutable) */ __webpack_exports__["k"] = startMetronome;
-/* harmony export (immutable) */ __webpack_exports__["a"] = adjustMetronomeVolume;
-/* harmony export (immutable) */ __webpack_exports__["l"] = stopMetronome;
-/* harmony export (immutable) */ __webpack_exports__["e"] = playMetronomeSingle;
-/* harmony export (immutable) */ __webpack_exports__["g"] = soundPlay;
-/* harmony export (immutable) */ __webpack_exports__["i"] = soundStop;
-/* harmony export (immutable) */ __webpack_exports__["h"] = soundPlayCpu;
-/* harmony export (immutable) */ __webpack_exports__["j"] = soundStopCpu;
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "a", function() { return SUSTAIN_TIME; });
+/* harmony export (immutable) */ __webpack_exports__["c"] = getTempo;
+/* harmony export (immutable) */ __webpack_exports__["g"] = setTempo;
+/* harmony export (immutable) */ __webpack_exports__["d"] = getTime;
+/* harmony export (immutable) */ __webpack_exports__["e"] = initMetronome;
+/* harmony export (immutable) */ __webpack_exports__["l"] = startMetronome;
+/* harmony export (immutable) */ __webpack_exports__["b"] = adjustMetronomeVolume;
+/* harmony export (immutable) */ __webpack_exports__["m"] = stopMetronome;
+/* harmony export (immutable) */ __webpack_exports__["f"] = playMetronomeSingle;
+/* harmony export (immutable) */ __webpack_exports__["h"] = soundPlay;
+/* harmony export (immutable) */ __webpack_exports__["j"] = soundStop;
+/* harmony export (immutable) */ __webpack_exports__["i"] = soundPlayCpu;
+/* harmony export (immutable) */ __webpack_exports__["k"] = soundStopCpu;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__metronome_controls_js__ = __webpack_require__(6);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__cpuPlayer_js__ = __webpack_require__(7);
 
@@ -96,28 +97,35 @@ let destination = ctx.destination;;
 let osc = {};  //for 84 keys
 let gainNode = {};
 let volumeManualNode, whistleFilterStep1, whistleFilterStep2, compressor;   //  manual sound nodes
-let startedSustain = {};
+
 
 
 let oscCpu = {};
 let gainNodeCpu = {};
 let volumeCpu, whistleFilterCpuStep1, whistleFilterCpuStep2, compressorCpu;   //  auto sound nodes
-let startedSustainCpu = {};
+let lastPressCpu = {};
 
 let metronomeSource, metronomeGain;
 let metronomeTimer;
 let metronomeOn = false;
 
 
-let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100];   // old
-//let overtones = [0, 1, .66, .25, .33, .1, .5, .12, .23, .12, .1];
+let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100, 0,0,0,0];   // old
+let overtonesLOW = [0, .089, .562, 2.818, .501, 1, .178, .355, .100, .089, .050, .022, .071, .045, .126];
+let overtones1 = [1.0, 0.399064778, 0.229404484, 0.151836061, 0.196754229, 0.093742264, 0.060871957,
+  0.138605419, 0.010535002, 0.071021868, 0.029954614, 0.051299684, 0.055948288,   0.066208224, 0.010067391, 0.00753679,
+  0.008196947, 0.012955577, 0.007316738,   0.006216476, 0.005116215, 0.006243983,
+  0.002860679, 0.002558108, 0.0, 0.001650392];
 let real = [];
+let realLOW = [];
 let imag = [];
-for(let i=0;i<overtones.length;i++){
-  real[i] = overtones[i];
+for(let i=0;i<overtones1.length;i++){
+  real[i] = overtones1[i];
+  //realLOW[i] = overtonesLOW[i];
   imag[i] = 0;
 }
 let pianoTable = ctx.createPeriodicWave(real, imag);
+
 
 function getTempo(){
   return tempo;
@@ -132,8 +140,26 @@ function getTime(){
 }
 
 function initManualSound(){
+  // (84 x (osc -> gain)  )   ->   volumeManualNode ->  filter1 -> filter2 -> compressor -> output
+
   volumeManualNode = ctx.createGain();
   volumeManualNode.gain.setValueAtTime(1,0);
+
+  for(let keyNumber=1; keyNumber<=84;keyNumber++){
+    let diffHalftones = keyNumber - STD_KEYNUMBER_A;
+    let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
+    osc[keyNumber] = ctx.createOscillator();
+    osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
+    osc[keyNumber].setPeriodicWave(pianoTable);
+    osc[keyNumber].keyNumber = keyNumber;
+    osc[keyNumber].start(0);
+
+    gainNode[keyNumber] = ctx.createGain();
+    gainNode[keyNumber].gain.setValueAtTime(0,0);
+
+    osc[keyNumber].connect(gainNode[keyNumber]);
+    gainNode[keyNumber].connect(volumeManualNode);
+  }
 
   whistleFilterStep1 = ctx.createBiquadFilter();
   whistleFilterStep1.type = 'highshelf';
@@ -161,10 +187,28 @@ function initManualSound(){
 }
 
 function initCpuSound(){
+  // launches after init metronome
   __WEBPACK_IMPORTED_MODULE_1__cpuPlayer_js__["a" /* init */]();
 
   volumeCpu = ctx.createGain();
   volumeCpu.gain.setValueAtTime(1,0);
+
+  for(let keyNumber=1; keyNumber<=84;keyNumber++){
+    let diffHalftones = keyNumber - STD_KEYNUMBER_A;
+    let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
+    oscCpu[keyNumber] = ctx.createOscillator();
+    oscCpu[keyNumber].frequency.setValueAtTime(toneHz, 0);
+    oscCpu[keyNumber].setPeriodicWave(pianoTable);
+    oscCpu[keyNumber].keyNumber = keyNumber;
+    oscCpu[keyNumber].start(0);
+
+    gainNodeCpu[keyNumber] = ctx.createGain();
+    gainNodeCpu[keyNumber].keyNumber = keyNumber;
+    gainNodeCpu[keyNumber].gain.setValueAtTime(0,0);
+
+    oscCpu[keyNumber].connect(gainNodeCpu[keyNumber]);
+    gainNodeCpu[keyNumber].connect(volumeCpu);
+  }
 
   whistleFilterCpuStep1 = ctx.createBiquadFilter();
   whistleFilterCpuStep1.type = 'highshelf';
@@ -196,8 +240,6 @@ function initMetronome(){
   __WEBPACK_IMPORTED_MODULE_0__metronome_controls_js__["a" /* init */]();
   initCpuSound();
 }
-
-
 
 function startMetronome(){
 
@@ -264,39 +306,54 @@ function loadSample(filename, bufferProp){
   req.send();
 }
 
-function resetSustain(e){
-  //console.log(ctx.currentTime - startedSustain[e.target.keyNumber]);
-  startedSustain[e.target.keyNumber] = 0;
+function envelopePress(gainChannel, time){
+  let pressTime = time || ctx.currentTime;
+  let gain = gainChannel.gain;
+console.log(pressTime);
+  gain.cancelAndHoldAtTime(pressTime);
+  gain.setValueAtTime(0, pressTime);
+  gain.linearRampToValueAtTime(1, pressTime + 0.005);
+  gain.setValueAtTime(1, pressTime + 0.005);
+  gain.linearRampToValueAtTime(0.55, pressTime + 0.015);
+  gain.setValueAtTime(0.55, pressTime + 0.015);
+
+  gain.exponentialRampToValueAtTime(0.001, pressTime + SUSTAIN_TIME);
+
+  if(time){
+    lastPressCpu[gainChannel.keyNumber] = pressTime;
+  }
+
 }
 
-function generateManualSound(keyNumber){
+function envelopeRelease(gainChannel, time){
+  let unpressTime = time || ctx.currentTime;
+  let gain = gainChannel.gain;
+  gain.cancelAndHoldAtTime(unpressTime);
+//console.log("              "+ unpressTime);
+//  if(!time){
+//    let cur = gain.value;
+//    gain.setValueAtTime(cur, unpressTime);
+//  }
+//  else if(time && lastPressCpu[gainChannel.keyNumber]){
+//    let long = time - lastPressCpu[gainChannel.keyNumber];
+//
+//    if(long < SUSTAIN_TIME){
+//      if(long <= 0.015){
+//        let cur = 0.55 + (1 - (long/0.015))*0.45;
+//        gain.setValueAtTime(cur, unpressTime);
+//      }
+//      else {
+//        let cur = 0.55 * Math.pow(0.001/ 0.55, ( (long-0.015)  / (SUSTAIN_TIME-0.015) ));
+//        gain.setValueAtTime(cur, unpressTime);
+//
+//      }
+//    }
+//  }else {
+//    //gain.setValue(0, unpressTime);
+//  }
 
-  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
-  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
-
-  if(startedSustain[keyNumber]){
-    osc[keyNumber].disconnect();
-  }
-
-  osc[keyNumber] = ctx.createOscillator();
-  osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
-  osc[keyNumber].setPeriodicWave(pianoTable);
-
-  osc[keyNumber].onended = resetSustain;
-  osc[keyNumber].keyNumber = keyNumber;
-
-  gainNode[keyNumber] = ctx.createGain();
-  gainNode[keyNumber].gain.setValueAtTime(1,0);
-  if(!volumeManualNode){
-    initManualSound();
-  }
-
-  gainNode[keyNumber].connect(volumeManualNode);
-
-  osc[keyNumber].connect(gainNode[keyNumber]);
-  gainNode[keyNumber].gain.linearRampToValueAtTime(0, ctx.currentTime + SUSTAIN_TIME);
-  osc[keyNumber].start(0);
-
+  //gain.exponentialRampToValueAtTime(0.001, unpressTime + SUSTAIN_TIME);
+  gain.setTargetAtTime(0, unpressTime, SUSTAIN_TIME/ Math.log(0.55/0.001));
 
 }
 
@@ -306,7 +363,14 @@ function soundPlay(key){
   let oct = +key.parentElement.dataset.oct+2;
   let keyNumber = oct*12+keyTone;
 
-  generateManualSound(keyNumber);
+  if(!volumeManualNode){
+    initManualSound();
+  }
+
+
+  envelopePress(gainNode[keyNumber]);
+
+
 
 
 }
@@ -316,12 +380,7 @@ function soundStop(key){
   let oct = +key.parentElement.dataset.oct+2;
   let keyNumber = oct*12+keyTone;
   
-  if(!osc[keyNumber]){
-    return;
-  }
-
-  startedSustain[keyNumber] = ctx.currentTime;
-  osc[keyNumber].stop(ctx.currentTime+SUSTAIN_TIME);
+  envelopeRelease(gainNode[keyNumber]);
 
 
 }
@@ -329,32 +388,24 @@ function soundStop(key){
 
 
 function soundPlayCpu(keyNumber, time, duration){
-  let diffHalftones = keyNumber - STD_KEYNUMBER_A;
-  let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
+
+  let stopTime = time + duration;
+
+  envelopePress(gainNodeCpu[keyNumber], time);
+  envelopeRelease(gainNodeCpu[keyNumber], stopTime);
 
 
-  oscCpu[keyNumber] = ctx.createOscillator();
-  oscCpu[keyNumber].frequency.setValueAtTime(toneHz, 0);
-  oscCpu[keyNumber].setPeriodicWave(pianoTable);
-
- // oscCpu[keyNumber].onended = endCpuSound(keyNumber);
-
-  gainNodeCpu[keyNumber] = ctx.createGain();
-  gainNodeCpu[keyNumber].gain.setValueAtTime(1,time);
-
-  gainNodeCpu[keyNumber].connect(volumeCpu);
-
-  oscCpu[keyNumber].connect(gainNodeCpu[keyNumber]);
-  gainNodeCpu[keyNumber].gain.linearRampToValueAtTime(0, time + duration + SUSTAIN_TIME/4);
-
-  oscCpu[keyNumber].start(time);
-  oscCpu[keyNumber].stop(time+duration+SUSTAIN_TIME/4);
 }
 
 function soundStopCpu(time){
-  for( let key in oscCpu){
-    oscCpu[key].stop(time + SUSTAIN_TIME);
+  for( let key in gainNodeCpu){
+
+      if(lastPressCpu[key]){
+        envelopeRelease(gainNodeCpu[key], time);
+      }
+
   }
+
 }
 
 
@@ -544,7 +595,12 @@ let examples = {
   't132 8 - h. 16 d f ab g f h f + d  -f h ab g f' +
   ' e + db -hb g +c -ab  f ab g hb g eb ab f d f' +
   ' e g e c f d - h +d 8 c. 16 d g hb g ' +
-  ' ab + c f d f ab +c - h +c -f gd 4 e'
+  ' ab + c f d f ab +c - h +c -f gd 4 e',
+
+
+  '2': 't80 o1 4 _c e g_  _c e g_ _ a +c e_ _ a +c e_ _d f a_ _d f a_ _g h +d_ _g h +d_',
+
+  '3' : 't60 o1 4 cccc'
 
 };
 
@@ -568,7 +624,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 
 function ready(){
-  __WEBPACK_IMPORTED_MODULE_3__sound_js__["d" /* initMetronome */]();
+  __WEBPACK_IMPORTED_MODULE_3__sound_js__["e" /* initMetronome */]();
   __WEBPACK_IMPORTED_MODULE_1__keypress_visual_js__["b" /* enableVisualClick */]();
   __WEBPACK_IMPORTED_MODULE_0__board_js__["a" /* enableOctaveChange */]();
   __WEBPACK_IMPORTED_MODULE_2__keymap_js__["a" /* signKeys */]();
@@ -666,7 +722,7 @@ function playKey(e) {
     return;
   };
   this.dataset.isPressed = true;
-  __WEBPACK_IMPORTED_MODULE_1__sound_js__["g" /* soundPlay */](this);
+  __WEBPACK_IMPORTED_MODULE_1__sound_js__["h" /* soundPlay */](this);
 
 }
 
@@ -681,7 +737,7 @@ function stopKey(e) {
   if(e && e.type=="mouseout" && !(e.buttons & 1)){
     return;
   }
-  __WEBPACK_IMPORTED_MODULE_1__sound_js__["i" /* soundStop */](this);
+  __WEBPACK_IMPORTED_MODULE_1__sound_js__["j" /* soundStop */](this);
 }
 
 function isPressedOnKeyboard(key){
@@ -776,10 +832,10 @@ function setControl(){
   this.setAttribute('value', this.value);
   if(this.dataset.control == "speed"){
     document.querySelector("#tempo").textContent = this.value;
-    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["f" /* setTempo */])(this.value);
+    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["g" /* setTempo */])(this.value);
   } else if(this.dataset.control=="volume")
   {
-    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["a" /* adjustMetronomeVolume */])(this.value);
+    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["b" /* adjustMetronomeVolume */])(this.value);
   }
 }
 
@@ -787,11 +843,11 @@ function togglePower(){
   if(!this.classList.contains('on')){
     document.querySelector('#tempo').classList.add('on');
     this.classList.add('on');
-    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["k" /* startMetronome */])();
+    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["l" /* startMetronome */])();
   }else{
     document.querySelector('#tempo').classList.remove('on');
     this.classList.remove('on');
-    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["l" /* stopMetronome */])();
+    Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["m" /* stopMetronome */])();
   }
 
 
@@ -834,6 +890,7 @@ let SILENCE_INTRO_TICKS = 4;
 
 let PROCESSING_TIME = 1; // seconds
 
+
 function init(){
   document.querySelector(".player .start").addEventListener("click", takeNotes);
 }
@@ -852,13 +909,14 @@ function playCommands(sequenceObj) {
   let commands = sequenceObj.commands;
   let timings = sequenceObj.timings;
   let oct = 1;
-  let outerTemp = Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["b" /* getTempo */])();
+  let outerTemp = Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["c" /* getTempo */])();
+
 
   let stdInnerTemp = outerTemp;
   let currentInnerTemp;
   let currentSpeed = 1;
 
-
+  let keyEnd = {};
   let notesCount = 0;
 
   timings = timings.map( a=> {
@@ -870,19 +928,20 @@ function playCommands(sequenceObj) {
     }
   });
 
-  let ctxTime = Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["c" /* getTime */])();
+  let ctxTime = Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["d" /* getTime */])();
   let startTime = ctxTime + PROCESSING_TIME;
 
   let breakPoints = [0];    // tacts in each tempo
   let breakTime = [0];      // seconds when change tempo
   let tempoZone = 0;        // increase in each tempo change
   let q = [60/outerTemp];   //  4th note in seconds
-
+  let qSustain = __WEBPACK_IMPORTED_MODULE_0__sound_js__["a" /* SUSTAIN_TIME */]/q;
 
 
   for (let i = 0; i < commands.length; i++) {
 
     if (!timings[i].duration) {
+      /* tempo change */
       if (commands[i].startsWith('t')) {
         let newInnerTemp = parseInt(commands[i].slice(1));
         if(!notesCount){
@@ -901,6 +960,7 @@ function playCommands(sequenceObj) {
         currentSpeed = newInnerTemp/stdInnerTemp;
 
       }
+      /* octave change */
       else if (commands[i].startsWith('o')) {
         let nextOct = parseInt(commands[i].slice(1));
         if (!isNaN(nextOct)) {
@@ -913,15 +973,58 @@ function playCommands(sequenceObj) {
           oct++;
         }
       }
+      /* chord mode */
+      else if(commands[i] == '_'){
+        let chordOct = oct;
+        while(true){
+          i++;
+          if(commands[i] == '_'){
+            break;
+          }
+          while(!NOTES[commands[i]]){
+            if(commands[i].startsWith('+')){
+              chordOct++;
+            }
+            else if(commands[i].startsWith('-')) {
+              chordOct--;
+            }
+            else {
+              console.log("unknown command");
+              break;
+            }
+            commands[i] = commands[i].slice(1);
+          }
+          let key = NOTES[commands[i]] + (chordOct+2) * 12;
+          notesCount++;
+
+          let fingerRaiseTime = 0.04;
+          if(keyEnd[key] && keyEnd[key] >= timings[i].start){      // duplicate note
+            fingerRaiseTime = 0.08;
+          }
+
+          keyEnd[key] = timings[i].end + qSustain;
+          Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["i" /* soundPlayCpu */])(key, startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone], timings[i].duration*q[tempoZone] - fingerRaiseTime);
+
+
+        }
+
+      }
       else if(commands[i] == '@'){
-        Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["j" /* soundStopCpu */])(startTime+ breakTime[tempoZone] +  timings[i].start*q[tempoZone]);
+        Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["k" /* soundStopCpu */])(startTime+ breakTime[tempoZone] +  timings[i].start*q[tempoZone]);
       }
     }
 
     else {
       let key = NOTES[commands[i]] + (oct+2) * 12;
       notesCount++;
-      Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["h" /* soundPlayCpu */])(key, startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone], timings[i].duration*q[tempoZone]);
+
+      let fingerRaiseTime = 0.04;
+      if(keyEnd[key] && keyEnd[key] >= timings[i].start){      // duplicate note
+        fingerRaiseTime = 0.08;
+      }
+
+      keyEnd[key] = timings[i].end + qSustain;
+      Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["i" /* soundPlayCpu */])(key, startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone], timings[i].duration*q[tempoZone] - fingerRaiseTime);
     }
 
   }
@@ -933,7 +1036,7 @@ function playCommands(sequenceObj) {
 
   for(let tzone=0; tzone<breakPoints.length ;tzone++){
     for(let j=breakPoints[tzone]; j<breakPoints[tzone+1]; j++){
-      Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["e" /* playMetronomeSingle */])(startTime+breakTime[tzone]+(j-breakPoints[tzone])*q[tzone]);
+      Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["f" /* playMetronomeSingle */])(startTime+breakTime[tzone]+(j-breakPoints[tzone])*q[tzone]);
     }
   }
 
@@ -968,6 +1071,7 @@ function parse(sheet){
 
   while(true) {
     let c = sheet[pos];
+
     /*    tempo change , octave change :     t60  o2     */
     if (c == "t" || c == 'o') {
       next = sheet.slice(pos).indexOf(" ");
@@ -978,18 +1082,21 @@ function parse(sheet){
       commands.push(command);
       pos += next+1;
     }
+
     /*  1 octave down    :     -    */
     else if (c == '-') {
       timings.push({start: time, end: time});
       commands.push('o-');
       pos ++;
     }
+
     /*  1 octave up    :     +     */
     else if (c == '+') {
       timings.push({start: time, end: time});
       commands.push('o+');
       pos ++;
     }
+
     /* note detect mode :   c d e f g a h; cb c# ; cdc ebdbc f#gh ;   pause detect : p  */
     else if ('cdefgahp'.indexOf(c) != -1) {
       let quitNoteMode = new RegExp("[^cdefgah#bp ]");
@@ -1042,8 +1149,10 @@ function parse(sheet){
       pos = next;
 
     }
+
+    /*  dot -  last note duration x1.5  */
     else if(c == '.'){
-      /*  dot -  last note duration x1.5  */
+
       let lastDur = timings[timings.length-1].end - timings[timings.length-1].start;
       timings[timings.length-1].end += lastDur/2;
       time += lastDur/2;
@@ -1055,10 +1164,13 @@ function parse(sheet){
       dur = newDur;
       pos += next+1;
     }
+
     /* ignore whitespace */
     else if(c == ' '){
       pos++;
+
     }
+
     /*   merge note length  */
     else if (c == '^'){
       let noteToFind = '';
@@ -1090,6 +1202,95 @@ function parse(sheet){
       timings[noteIndex].end = time;
 
       pos = currentPos;
+    }
+
+    /*   enter chord mode   */
+    else if (c == '_'){
+      console.log(pos);
+      function octaveModifier(note){
+        let [modifier, k] = octaveChange >= 0 ? ["+", 1] : ["-",-1];
+        let newNote = note;
+        for(let i=0; i<Math.abs(octaveChange);i++){
+          newNote = modifier + newNote;
+        }
+        octaveChange = 0;
+        return newNote;
+
+      }
+
+      let next = pos + sheet.slice(pos+1).indexOf('_')+1;    // chord mode exit
+      let chord = [];      // to push notes
+      let octaveChange = 0;
+      console.log(sheet.slice(pos+1));
+      //console.log(sheet.slice(pos+1, next));
+      let note = "";
+
+      for(let i=pos+1; i<next; i++){
+
+
+
+        if('cdefgah'.indexOf(sheet[i]) != -1){
+          if(!note){
+            /* buffer empty - add note */
+            note = sheet[i];
+          }else{
+            /* note already exists in buffer  - add to chord, clear buffer, look new note  */
+            chord.push(octaveModifier(note));
+            //timings.push({start: time, end: time + 4 / dur});
+            note = sheet[i];
+          }
+        }
+        else if (note && '#b'.indexOf(sheet[i]) != -1){
+          /* note already exists in buffer - apply halftone up/down, add note to chord, clear buffer, ready for next note  */
+          note += sheet[i];
+          chord.push(octaveModifier(note));
+          //timings.push({start: time, end: time + 4 / dur});
+          note = "";
+        }
+        else if(sheet[i] == '+'){
+          if(note){
+            chord.push(octaveModifier(note));
+            note = "";
+          }
+          octaveChange++;
+
+        }
+        else if(sheet[i] == '-'){
+          if(note){
+            chord.push(octaveModifier(note));
+            note = "";
+          }
+          octaveChange--;
+        }
+
+
+        else if (sheet[i] != ' '){
+          /*  error  */
+          console.log("Unknown command:" + sheet[i]);
+          console.log(sheet.slice(pos, pos+10));
+          commands.push("@");
+          timings.push({start:time, end:time});
+          break;
+        }
+        if(i == next-1 && note){
+          chord.push(note);
+        }
+
+      }
+      /* enter chord mode in player */
+      commands.push("_");
+      timings.push({start: time, end: time});
+      for(let i=0; i<chord.length;i++){
+        commands.push(chord[i]);
+        timings.push({start: time, end: time + 4/dur});
+      }
+
+      /* exit chord mode in player */
+      time += 4/dur;
+      commands.push("_");
+      timings.push({start: time, end: time});
+      pos = next+1;
+
     }
 
     else if(c == '@'){
