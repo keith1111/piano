@@ -11,7 +11,7 @@ export function renderExamples(){
 
 export let examples = {
   '1' : '* this is a comment. Song: Bach Prelude C-moll  * ' +
-  ' t132 o2 16' +
+  ' =solo t132 o2 16' +
   ' c - eb d eb c eb d eb + c - eb d eb c eb d eb' +
   ' ab f e f c f e f ab f e f c f e f' +
   ' h f eb f d f eb f h f eb f d f eb f' +
@@ -60,8 +60,9 @@ export let examples = {
   ' ab + c f d f ab +c - h +c -f gd 4 e',
 
 
-  '2': 't80 o1 4 _c e g_  _c e g_ _ a +c e_ _ a +c e_ _d f a_ _d f a_ _g h +d_ _g h +d_',
+  '2': '=chords t80 o1 4 _c e g_  _c e g_ _ a +c e_ _ a +c e_ _d f a_ _d f a_ _g h +d_ _g h +d_',
 
-  '3' : 't60 o1 64 cccc'
+  '3' : '=test t60 o1 4 cccc @ ' +
+  '=solo t60 o-1 4 cde f'
 
 };
