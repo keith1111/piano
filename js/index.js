@@ -3,6 +3,7 @@ import * as keyPressVisual from './keypress-visual.js';
 import * as keyMap from './keymap.js';
 import * as sound from './sound.js';
 import * as examples from './examples.js';
+import * as cpuPlayer from './cpuPlayer.js';
 
 
 
@@ -13,6 +14,7 @@ function ready(){
   keyMap.signKeys();
   keyPressVisual.enableKeyboardPress();
   examples.renderExamples();
+  cpuPlayer.init();
 
 
 }

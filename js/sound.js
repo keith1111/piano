@@ -1,5 +1,5 @@
 import * as metronomeControls from './metronome-controls.js';
-import * as cpuPlayer from './cpuPlayer.js';
+
 
 let STD_TUNING = 440;    // tuning A 1-st oct  std == 440Hz
 let STD_KEYNUMBER_A = 46; // place of A-note 1-st oct on piano board
@@ -9,24 +9,28 @@ let tempo = 70;
 let ctx = new AudioContext();
 let buffer = {};   // buffer.metronome etc
 let destination = ctx.destination;;
-let osc = {};  //for 84 keys
-let gainNode = {};
-let volumeManualNode, whistleFilterStep1, whistleFilterStep2, compressor;   //  manual sound nodes
 
+let cpuChannel = 1;
 
+/* all sound generators will be here */
+let channels = {
+  manual: {},
+  cpu: {}
+};
 
-let oscCpu = {};
-let gainNodeCpu = {};
-let volumeCpu, whistleFilterCpuStep1, whistleFilterCpuStep2, compressorCpu;   //  auto sound nodes
-let lastPressCpu = {};
+console.log(channels);
+
+channels.manual.osc = {};  //for 84 keys
+channels.manual.gainNode = {};
+ //  manual sound nodes
 
 let metronomeSource, metronomeGain;
 let metronomeTimer;
 let metronomeOn = false;
 
 
-let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100, 0,0,0,0];   // old
-let overtonesLOW = [0, .089, .562, 2.818, .501, 1, .178, .355, .100, .089, .050, .022, .071, .045, .126];
+//let overtones = [0, 1, .562, .282, .251, .282, .158, .100, .251, .002, .100, 0,0,0,0];   // old
+//let overtonesLOW = [0, .089, .562, 2.818, .501, 1, .178, .355, .100, .089, .050, .022, .071, .045, .126];
 let overtones1 = [1.0, 0.399064778, 0.229404484, 0.151836061, 0.196754229, 0.093742264, 0.060871957,
   0.138605419, 0.010535002, 0.071021868, 0.029954614, 0.051299684, 0.055948288,   0.066208224, 0.010067391, 0.00753679,
   0.008196947, 0.012955577, 0.007316738,   0.006216476, 0.005116215, 0.006243983,
@@ -57,103 +61,106 @@ export function getTime(){
 function initManualSound(){
   // (84 x (osc -> gain)  )   ->   volumeManualNode ->  filter1 -> filter2 -> compressor -> output
 
-  volumeManualNode = ctx.createGain();
-  volumeManualNode.gain.setValueAtTime(1,0);
+  channels.manual.volumeManualNode = ctx.createGain();
+  channels.manual.volumeManualNode.gain.setValueAtTime(1,0);
 
   for(let keyNumber=1; keyNumber<=84;keyNumber++){
     let diffHalftones = keyNumber - STD_KEYNUMBER_A;
     let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
-    osc[keyNumber] = ctx.createOscillator();
-    osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
-    osc[keyNumber].setPeriodicWave(pianoTable);
-    osc[keyNumber].keyNumber = keyNumber;
-    osc[keyNumber].start(0);
+    channels.manual.osc[keyNumber] = ctx.createOscillator();
+    channels.manual.osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
+    channels.manual.osc[keyNumber].setPeriodicWave(pianoTable);
+    channels.manual.osc[keyNumber].keyNumber = keyNumber;
+    channels.manual.osc[keyNumber].start(0);
 
-    gainNode[keyNumber] = ctx.createGain();
-    gainNode[keyNumber].gain.setValueAtTime(0,0);
+    channels.manual.gainNode[keyNumber] = ctx.createGain();
+    channels.manual.gainNode[keyNumber].gain.setValueAtTime(0,0);
 
-    osc[keyNumber].connect(gainNode[keyNumber]);
-    gainNode[keyNumber].connect(volumeManualNode);
+    channels.manual.osc[keyNumber].connect(channels.manual.gainNode[keyNumber]);
+    channels.manual.gainNode[keyNumber].connect(channels.manual.volumeManualNode);
   }
 
-  whistleFilterStep1 = ctx.createBiquadFilter();
-  whistleFilterStep1.type = 'highshelf';
-  whistleFilterStep1.Q.setValueAtTime(.05,0);
-  whistleFilterStep1.frequency.setValueAtTime(7000,0);
-  whistleFilterStep1.gain.setValueAtTime(-45,0);
+  channels.manual.whistleFilterStep1 = ctx.createBiquadFilter();
+  channels.manual.whistleFilterStep1.type = 'highshelf';
+  channels.manual.whistleFilterStep1.Q.setValueAtTime(.05,0);
+  channels.manual.whistleFilterStep1.frequency.setValueAtTime(7000,0);
+  channels.manual.whistleFilterStep1.gain.setValueAtTime(-45,0);
 
-  whistleFilterStep2 = ctx.createBiquadFilter();
-  whistleFilterStep2.type = 'highshelf';
-  whistleFilterStep2.Q.setValueAtTime(.05,0);
-  whistleFilterStep2.frequency.setValueAtTime(10000,0);
-  whistleFilterStep2.gain.setValueAtTime(-70,0);
+  channels.manual.whistleFilterStep2 = ctx.createBiquadFilter();
+  channels.manual.whistleFilterStep2.type = 'highshelf';
+  channels.manual.whistleFilterStep2.Q.setValueAtTime(.05,0);
+  channels.manual.whistleFilterStep2.frequency.setValueAtTime(10000,0);
+  channels.manual.whistleFilterStep2.gain.setValueAtTime(-70,0);
 
-  compressor = ctx.createDynamicsCompressor();
+  channels.manual.compressor = ctx.createDynamicsCompressor();
 
-  compressor.attack.setValueAtTime(.1,0);
-  compressor.knee.setValueAtTime(12,0);
-  compressor.ratio.setValueAtTime(15,0);
-  compressor.release.setValueAtTime(1,0);
+  channels.manual.compressor.attack.setValueAtTime(.1,0);
+  channels.manual.compressor.knee.setValueAtTime(12,0);
+  channels.manual.compressor.ratio.setValueAtTime(15,0);
+  channels.manual.compressor.release.setValueAtTime(1,0);
 
-  volumeManualNode.connect(whistleFilterStep1);
-  whistleFilterStep1.connect(whistleFilterStep2);
-  whistleFilterStep2.connect(compressor);
-  compressor.connect(destination);
+  channels.manual.volumeManualNode.connect(channels.manual.whistleFilterStep1);
+  channels.manual.whistleFilterStep1.connect(channels.manual.whistleFilterStep2);
+  channels.manual.whistleFilterStep2.connect(channels.manual.compressor);
+  channels.manual.compressor.connect(destination);
 }
 
-function initCpuSound(){
-  // launches after init metronome
-  cpuPlayer.init();
+export function initCpuSound(name){
+  // cpu channel name from cpuPlayer
 
-  volumeCpu = ctx.createGain();
-  volumeCpu.gain.setValueAtTime(1,0);
+  channels.cpu[name] = {};
+  channels.cpu[name].volumeCpuNode = ctx.createGain();
+  channels.cpu[name].volumeCpuNode.gain.setValueAtTime(1,0);
+  channels.cpu[name].osc = {};
+  channels.cpu[name].gainNode = {};
+  channels.cpu[name].lastPress = {};
 
   for(let keyNumber=1; keyNumber<=84;keyNumber++){
     let diffHalftones = keyNumber - STD_KEYNUMBER_A;
     let toneHz = Math.pow(2, diffHalftones/12) * STD_TUNING;
-    oscCpu[keyNumber] = ctx.createOscillator();
-    oscCpu[keyNumber].frequency.setValueAtTime(toneHz, 0);
-    oscCpu[keyNumber].setPeriodicWave(pianoTable);
-    oscCpu[keyNumber].keyNumber = keyNumber;
-    oscCpu[keyNumber].start(0);
+    channels.cpu[name].osc[keyNumber] = ctx.createOscillator();
+    channels.cpu[name].osc[keyNumber].frequency.setValueAtTime(toneHz, 0);
+    channels.cpu[name].osc[keyNumber].setPeriodicWave(pianoTable);
+    channels.cpu[name].osc[keyNumber].keyNumber = keyNumber;
+    channels.cpu[name].osc[keyNumber].start(0);
 
-    gainNodeCpu[keyNumber] = ctx.createGain();
-    gainNodeCpu[keyNumber].keyNumber = keyNumber;
-    gainNodeCpu[keyNumber].gain.setValueAtTime(0,0);
+    channels.cpu[name].gainNode[keyNumber] = ctx.createGain();
+    channels.cpu[name].gainNode[keyNumber].keyNumber = keyNumber;
+    channels.cpu[name].gainNode[keyNumber].gain.setValueAtTime(0,0);
 
-    oscCpu[keyNumber].connect(gainNodeCpu[keyNumber]);
-    gainNodeCpu[keyNumber].connect(volumeCpu);
+    channels.cpu[name].osc[keyNumber].connect(channels.cpu[name].gainNode[keyNumber]);
+    channels.cpu[name].gainNode[keyNumber].connect(channels.cpu[name].volumeCpuNode);
   }
 
-  whistleFilterCpuStep1 = ctx.createBiquadFilter();
-  whistleFilterCpuStep1.type = 'highshelf';
-  whistleFilterCpuStep1.Q.setValueAtTime(.05,0);
-  whistleFilterCpuStep1.frequency.setValueAtTime(7000,0);
-  whistleFilterCpuStep1.gain.setValueAtTime(-45,0);
+  channels.cpu[name].whistleFilterStep1 = ctx.createBiquadFilter();
+  channels.cpu[name].whistleFilterStep1.type = 'highshelf';
+  channels.cpu[name].whistleFilterStep1.Q.setValueAtTime(.05,0);
+  channels.cpu[name].whistleFilterStep1.frequency.setValueAtTime(7000,0);
+  channels.cpu[name].whistleFilterStep1.gain.setValueAtTime(-45,0);
 
-  whistleFilterCpuStep2 = ctx.createBiquadFilter();
-  whistleFilterCpuStep2.type = 'highshelf';
-  whistleFilterCpuStep2.Q.setValueAtTime(.05,0);
-  whistleFilterCpuStep2.frequency.setValueAtTime(10000,0);
-  whistleFilterCpuStep2.gain.setValueAtTime(-70,0);
+  channels.cpu[name].whistleFilterStep2 = ctx.createBiquadFilter();
+  channels.cpu[name].whistleFilterStep2.type = 'highshelf';
+  channels.cpu[name].whistleFilterStep2.Q.setValueAtTime(.05,0);
+  channels.cpu[name].whistleFilterStep2.frequency.setValueAtTime(10000,0);
+  channels.cpu[name].whistleFilterStep2.gain.setValueAtTime(-70,0);
 
-  compressorCpu = ctx.createDynamicsCompressor();
+  channels.cpu[name].compressor = ctx.createDynamicsCompressor();
 
-  compressorCpu.attack.setValueAtTime(.1,0);
-  compressorCpu.knee.setValueAtTime(12,0);
-  compressorCpu.ratio.setValueAtTime(15,0);
-  compressorCpu.release.setValueAtTime(1,0);
+  channels.cpu[name].compressor.attack.setValueAtTime(.1,0);
+  channels.cpu[name].compressor.knee.setValueAtTime(12,0);
+  channels.cpu[name].compressor.ratio.setValueAtTime(15,0);
+  channels.cpu[name].compressor.release.setValueAtTime(1,0);
 
-  volumeCpu.connect(whistleFilterCpuStep1);
-  whistleFilterCpuStep1.connect(whistleFilterCpuStep2);
-  whistleFilterCpuStep2.connect(compressorCpu);
-  compressorCpu.connect(destination);
+  channels.cpu[name].volumeCpuNode.connect(channels.cpu[name].whistleFilterStep1);
+  channels.cpu[name].whistleFilterStep1.connect(channels.cpu[name].whistleFilterStep2);
+  channels.cpu[name].whistleFilterStep2.connect(channels.cpu[name].compressor);
+  channels.cpu[name].compressor.connect(destination);
 }
 
 export function initMetronome(){
   loadSample("metronome.mp3", "metronome");
   metronomeControls.init();
-  initCpuSound();
+  //initCpuSound();
 }
 
 export function startMetronome(){
@@ -207,24 +214,24 @@ function loadSample(filename, bufferProp){
   req.open('GET', `./sample/${filename}`, true);
   req.responseType = 'arraybuffer';
   req.onload = function(e) {
-     ctx.decodeAudioData(this.response,function(decodedArrayBuffer) {
-        buffer[bufferProp] = decodedArrayBuffer;
+    ctx.decodeAudioData(this.response,function(decodedArrayBuffer) {
+      buffer[bufferProp] = decodedArrayBuffer;
 
-        metronomeGain = ctx.createGain();
+      metronomeGain = ctx.createGain();
 
 
-        metronomeGain.connect(destination);
-        }, function(e) {
-        console.log('Error decoding file', e);
-        });
+      metronomeGain.connect(destination);
+    }, function(e) {
+      console.log('Error decoding file', e);
+    });
   };
   req.send();
 }
 
-function envelopePress(gainChannel, time){
+function envelopePress(gainChannel, time, name){
   let pressTime = time || ctx.currentTime;
   let gain = gainChannel.gain;
-console.log(pressTime);
+
   gain.cancelAndHoldAtTime(pressTime);
   gain.setValueAtTime(0, pressTime);
   gain.linearRampToValueAtTime(1, pressTime + 0.005);
@@ -235,7 +242,7 @@ console.log(pressTime);
   gain.exponentialRampToValueAtTime(0.001, pressTime + SUSTAIN_TIME);
 
   if(time){
-    lastPressCpu[gainChannel.keyNumber] = pressTime;
+    channels.cpu[name].lastPress[gainChannel.keyNumber] = pressTime;
   }
 
 }
@@ -244,30 +251,7 @@ function envelopeRelease(gainChannel, time){
   let unpressTime = time || ctx.currentTime;
   let gain = gainChannel.gain;
   gain.cancelAndHoldAtTime(unpressTime);
-//console.log("              "+ unpressTime);
-//  if(!time){
-//    let cur = gain.value;
-//    gain.setValueAtTime(cur, unpressTime);
-//  }
-//  else if(time && lastPressCpu[gainChannel.keyNumber]){
-//    let long = time - lastPressCpu[gainChannel.keyNumber];
-//
-//    if(long < SUSTAIN_TIME){
-//      if(long <= 0.015){
-//        let cur = 0.55 + (1 - (long/0.015))*0.45;
-//        gain.setValueAtTime(cur, unpressTime);
-//      }
-//      else {
-//        let cur = 0.55 * Math.pow(0.001/ 0.55, ( (long-0.015)  / (SUSTAIN_TIME-0.015) ));
-//        gain.setValueAtTime(cur, unpressTime);
-//
-//      }
-//    }
-//  }else {
-//    //gain.setValue(0, unpressTime);
-//  }
 
-  //gain.exponentialRampToValueAtTime(0.001, unpressTime + SUSTAIN_TIME);
   gain.setTargetAtTime(0, unpressTime, SUSTAIN_TIME/ Math.log(0.55/0.001));
 
 }
@@ -278,12 +262,12 @@ export function soundPlay(key){
   let oct = +key.parentElement.dataset.oct+2;
   let keyNumber = oct*12+keyTone;
 
-  if(!volumeManualNode){
+  if(!channels.manual.volumeManualNode){
     initManualSound();
   }
 
 
-  envelopePress(gainNode[keyNumber]);
+  envelopePress(channels.manual.gainNode[keyNumber]);
 
 
 
@@ -295,28 +279,28 @@ export function soundStop(key){
   let oct = +key.parentElement.dataset.oct+2;
   let keyNumber = oct*12+keyTone;
   
-  envelopeRelease(gainNode[keyNumber]);
+  envelopeRelease(channels.manual.gainNode[keyNumber]);
 
 
 }
 
 
 
-export function soundPlayCpu(keyNumber, time, duration){
+export function soundPlayCpu(name, keyNumber, time, duration){
 
   let stopTime = time + duration;
 
-  envelopePress(gainNodeCpu[keyNumber], time);
-  envelopeRelease(gainNodeCpu[keyNumber], stopTime);
+  envelopePress(channels.cpu[name].gainNode[keyNumber], time, name);
+  envelopeRelease(channels.cpu[name].gainNode[keyNumber], stopTime);
 
 
 }
 
-export function soundStopCpu(time){
-  for( let key in gainNodeCpu){
+export function soundStopCpu(name, time){
+  for( let keyNumber in channels.cpu[name].gainNode){
 
-      if(lastPressCpu[key]){
-        envelopeRelease(gainNodeCpu[key], time);
+      if(channels.cpu[name].lastPress[keyNumber]){
+        envelopeRelease(channels.cpu[name].gainNode[keyNumber], time);
       }
 
   }
@@ -326,27 +310,5 @@ export function soundStopCpu(time){
 
 
 
-// let gainNode =  ctx.createGain();
-//let delayNode = ctx.createDelay();
 
-
-//delayNode.delayTime.setValueAtTime(.5,0);
-//let convolverNode = ctx.createConvolver();   //impulse response
-
-
-
-
-//  var analyser = context.createAnalyser();
-//// Размерность преобразования Фурье
-//// Если не понимаете, что это такое - ставьте 512, 1024 или 2048 ;)
-//  analyser.fftSize = 2048;
-//// Создаем массивы для хранения данных
-//  fFrequencyData = new Float32Array(analyser.frequencyBinCount);
-//  bFrequencyData = new Uint8Array(analyser.frequencyBinCount);
-//  bTimeData = new Uint8Array(analyser.frequencyBinCount);
-//// Получаем данные
-//  analyser.getFloatFrequencyData(fFrequencyData);
-//  analyser.getByteFrequencyData(bFrequencyData);
-//  analyser.getByteTimeDomainData(bTimeData);
-//// дальше у Вас есть массивы fFrequencyData, bFrequencyData, bTimeData, с которыми можно делать все, что вздумается
 
