@@ -60,9 +60,8 @@ export let examples = {
   ' ab + c f d f ab +c - h +c -f gd 4 e',
 
 
-  '2': '=chords t80 o1 4 _c e g_  _c e g_ _ a +c e_ _ a +c e_ _d f a_ _d f a_ _g h +d_ _g h +d_',
+  '2': '=chords t80 o0 4 _c e g h_  _c e g h_ _ a +c e g_ _ a +c e g_ _d f a +c_ _d f a +c_ _g f +c d_ _g h +d c_',
 
-  '3' : '=test t60 o1 4 cccc @ ' +
-  '=solo t60 o-1 4 cde f'
+  '3' : '=solo t60 o-1 4 cdef %3  cde% 4 f g'
 
 };

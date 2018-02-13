@@ -23,11 +23,12 @@ export function parse(sheet){
     let pos = 0;
     let next = 0;
     let dur = 4;
+    let modifierDur = 1;
     let time = 0;
     let commands = [];
     let timings = [];    //{start: 0, end: 1} in 4th notes
 
-
+    /*  parsing here    */
     while(true) {
       let c = partSheet[pos];
 
@@ -55,6 +56,22 @@ export function parse(sheet){
         commands.push('o+');
         pos ++;
       }
+      else if (c == '+') {
+        timings.push({start: time, end: time});
+        commands.push('o+');
+        pos ++;
+      }
+      else if(c == '%'){
+        if(modifierDur == 1){
+          next = partSheet.slice(pos).indexOf(" ");
+          let number = parseInt(partSheet.slice(pos+1));
+          modifierDur = number / (number-1);
+          pos += next+1;
+        }else{
+          modifierDur = 1;
+          pos++;
+        }
+      }
 
       /* note detect mode :   c d e f g a h; cb c# ; cdc ebdbc f#gh ;   pause detect : p  */
       else if ('cdefgahp'.indexOf(c) != -1) {
@@ -72,8 +89,8 @@ export function parse(sheet){
             }else{
               /* note already exists in buffer  - play, clear buffer, add new note  */
               commands.push(command);
-              timings.push({start: time, end: time + 4 / dur});
-              time += 4 / dur;
+              timings.push({start: time, end: time + 4 / (dur * modifierDur)});
+              time += 4 / (dur * modifierDur);
               command = partSheet[i];
             }
           }
@@ -81,13 +98,13 @@ export function parse(sheet){
             /* note already exists in buffer - apply halftone up/down, play note, clear buffer, ready for next note  */
             command += partSheet[i];
             commands.push(command);
-            timings.push({start: time, end: time + 4 / dur});
-            time += 4 / dur;
+            timings.push({start: time, end: time + 4 / (dur * modifierDur)});
+            time += 4 / (dur * modifierDur);
             command = "";
           }
           else if (partSheet[i] == 'p'){
             /* pause - add silence (no commands for pause dur)*/
-            time += 4/dur;
+            time += 4/(dur * modifierDur);
           }
 
           else if (partSheet[i] != ' '){
@@ -101,8 +118,8 @@ export function parse(sheet){
 
           if(i == next-1 && command){
             commands.push(command);
-            timings.push({start: time, end: time + 4 / dur});
-            time += 4 / dur;
+            timings.push({start: time, end: time + 4 / (dur * modifierDur)});
+            time += 4 / (dur * modifierDur);
           }
         }
         pos = next;
@@ -157,7 +174,7 @@ export function parse(sheet){
         }
 
         let noteIndex = commands.lastIndexOf(noteToFind);
-        time += 4/dur;
+        time += 4/(dur * modifierDur);
         timings[noteIndex].end = time;
 
         pos = currentPos;
@@ -241,11 +258,11 @@ export function parse(sheet){
         timings.push({start: time, end: time});
         for(let i=0; i<chord.length;i++){
           commands.push(chord[i]);
-          timings.push({start: time, end: time + 4/dur});
+          timings.push({start: time, end: time + 4/(dur * modifierDur)});
         }
 
         /* exit chord mode in player */
-        time += 4/dur;
+        time += 4/(dur * modifierDur);
         commands.push("_");
         timings.push({start: time, end: time});
         pos = next+1;
