@@ -159,8 +159,17 @@ function playCommands(sequenceObj) {
         fingerRaiseTime = 0.08;
       }
 
+      let pressTime = startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone];
+      let duration = timings[i].duration*q[tempoZone] - fingerRaiseTime;
+
+      /* to prevent silence instead of 64th notes */
+      if(duration <= 0.04){
+        duration = 0.04;
+      }
+
       keyEnd[key] = timings[i].end + qSustain;
-      soundPlayCpu(key, startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone], timings[i].duration*q[tempoZone] - fingerRaiseTime);
+
+      soundPlayCpu(key, pressTime , duration);
     }
 
   }
@@ -172,7 +181,8 @@ function playCommands(sequenceObj) {
 
   for(let tzone=0; tzone<breakPoints.length ;tzone++){
     for(let j=breakPoints[tzone]; j<breakPoints[tzone+1]; j++){
-      playMetronomeSingle(startTime+breakTime[tzone]+(j-breakPoints[tzone])*q[tzone]);
+      let metronomeHitTime = startTime+breakTime[tzone]+(j-breakPoints[tzone])*q[tzone];
+      playMetronomeSingle(metronomeHitTime);
     }
   }
 

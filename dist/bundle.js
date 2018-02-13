@@ -600,7 +600,7 @@ let examples = {
 
   '2': 't80 o1 4 _c e g_  _c e g_ _ a +c e_ _ a +c e_ _d f a_ _d f a_ _g h +d_ _g h +d_',
 
-  '3' : 't60 o1 4 cccc'
+  '3' : 't60 o1 64 cccc'
 
 };
 
@@ -1023,8 +1023,17 @@ function playCommands(sequenceObj) {
         fingerRaiseTime = 0.08;
       }
 
+      let pressTime = startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone];
+      let duration = timings[i].duration*q[tempoZone] - fingerRaiseTime;
+
+      /* to prevent silence instead of 64th notes */
+      if(duration <= 0.04){
+        duration = 0.04;
+      }
+
       keyEnd[key] = timings[i].end + qSustain;
-      Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["i" /* soundPlayCpu */])(key, startTime + breakTime[tempoZone] + (timings[i].start - breakPoints[tempoZone])*q[tempoZone], timings[i].duration*q[tempoZone] - fingerRaiseTime);
+
+      Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["i" /* soundPlayCpu */])(key, pressTime , duration);
     }
 
   }
@@ -1036,7 +1045,8 @@ function playCommands(sequenceObj) {
 
   for(let tzone=0; tzone<breakPoints.length ;tzone++){
     for(let j=breakPoints[tzone]; j<breakPoints[tzone+1]; j++){
-      Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["f" /* playMetronomeSingle */])(startTime+breakTime[tzone]+(j-breakPoints[tzone])*q[tzone]);
+      let metronomeHitTime = startTime+breakTime[tzone]+(j-breakPoints[tzone])*q[tzone];
+      Object(__WEBPACK_IMPORTED_MODULE_0__sound_js__["f" /* playMetronomeSingle */])(metronomeHitTime);
     }
   }
 

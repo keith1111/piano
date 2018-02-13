@@ -62,6 +62,6 @@ export let examples = {
 
   '2': 't80 o1 4 _c e g_  _c e g_ _ a +c e_ _ a +c e_ _d f a_ _d f a_ _g h +d_ _g h +d_',
 
-  '3' : 't60 o1 4 cccc'
+  '3' : 't60 o1 64 cccc'
 
 };
