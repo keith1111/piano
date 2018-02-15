@@ -62,6 +62,10 @@ export let examples = {
 
   '2': '=chords t80 o0 4 _c e g h_  _c e g h_ _ a +c e g_ _ a +c e g_ _d f a +c_ _d f a +c_ _g f +c d_ _g h +d c_',
 
-  '3' : '=solo t60 o-1 4 cdef %3  cde% 4 f g'
+  '3' : '=solo t60 o-1 4 %3 cdef   cde%  f g',
+
+  'maybe next time' : '=solo t60 o0 4 p p e. 8 a 4 +d 2 c 8 -h +c - 4 h 2 a 8 e a 4 +d 2 c 8 -h +c 16 -h +c 8 -h 2 ^h 8 %3 g +c e %' +
+  '4 f 2 e 8 -g +c 4 e 2 d 8 ed d c 2 c 4 -h 2 a 8 ^a 8 p a +c' +
+  '4 d %3 8 ^d d e% 4 f 16 p 8 g 16 f 8f 4 e. 8 ^e. 16 e 8 %3 a h +c % '
 
 };

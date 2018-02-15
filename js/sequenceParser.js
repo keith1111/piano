@@ -56,11 +56,8 @@ export function parse(sheet){
         commands.push('o+');
         pos ++;
       }
-      else if (c == '+') {
-        timings.push({start: time, end: time});
-        commands.push('o+');
-        pos ++;
-      }
+
+      /*  triplets mode  enter/exit   %3  .....   %   */
       else if(c == '%'){
         if(modifierDur == 1){
           next = partSheet.slice(pos).indexOf(" ");
@@ -135,10 +132,10 @@ export function parse(sheet){
         pos++;
       }
       else if (!isNaN(parseInt(c))) {
-        next = partSheet.slice(pos).indexOf(" ");
+        next = partSheet.slice(pos).search(/\D/);
         let newDur = +partSheet.substr(pos, next);
         dur = newDur;
-        pos += next+1;
+        pos += next;
       }
 
       /* ignore whitespace */
@@ -173,8 +170,15 @@ export function parse(sheet){
 
         }
 
+        let mult = 1;    // dot notes
+        if(partSheet[currentPos] == '.'){
+          mult = 1.5;
+          currentPos++;
+        }
+
         let noteIndex = commands.lastIndexOf(noteToFind);
-        time += 4/(dur * modifierDur);
+
+        time += (4/(dur * modifierDur)) * mult;
         timings[noteIndex].end = time;
 
         pos = currentPos;

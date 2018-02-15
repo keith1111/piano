@@ -562,7 +562,11 @@ let examples = {
 
   '2': '=chords t80 o0 4 _c e g h_  _c e g h_ _ a +c e g_ _ a +c e g_ _d f a +c_ _d f a +c_ _g f +c d_ _g h +d c_',
 
-  '3' : '=solo t60 o-1 4 cdef %3  cde% 4 f g'
+  '3' : '=solo t60 o-1 4 %3 cdef   cde%  f g',
+
+  'maybe next time' : '=solo t60 o0 4 p p e. 8 a 4 +d 2 c 8 -h +c - 4 h 2 a 8 e a 4 +d 2 c 8 -h +c 16 -h +c 8 -h 2 ^h 8 %3 g +c e %' +
+  '4 f 2 e 8 -g +c 4 e 2 d 8 ed d c 2 c 4 -h 2 a 8 ^a 8 p a +c' +
+  '4 d %3 8 ^d d e% 4 f 16 p 8 g 16 f 8f 4 e. 8 ^e. 16 e 8 %3 a h +c % '
 
 };
 
@@ -1104,11 +1108,8 @@ function parse(sheet){
         commands.push('o+');
         pos ++;
       }
-      else if (c == '+') {
-        timings.push({start: time, end: time});
-        commands.push('o+');
-        pos ++;
-      }
+
+      /*  triplets mode  enter/exit   %3  .....   %   */
       else if(c == '%'){
         if(modifierDur == 1){
           next = partSheet.slice(pos).indexOf(" ");
@@ -1183,10 +1184,10 @@ function parse(sheet){
         pos++;
       }
       else if (!isNaN(parseInt(c))) {
-        next = partSheet.slice(pos).indexOf(" ");
+        next = partSheet.slice(pos).search(/\D/);
         let newDur = +partSheet.substr(pos, next);
         dur = newDur;
-        pos += next+1;
+        pos += next;
       }
 
       /* ignore whitespace */
@@ -1221,8 +1222,15 @@ function parse(sheet){
 
         }
 
+        let mult = 1;    // dot notes
+        if(partSheet[currentPos] == '.'){
+          mult = 1.5;
+          currentPos++;
+        }
+
         let noteIndex = commands.lastIndexOf(noteToFind);
-        time += 4/(dur * modifierDur);
+
+        time += (4/(dur * modifierDur)) * mult;
         timings[noteIndex].end = time;
 
         pos = currentPos;
