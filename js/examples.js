@@ -64,8 +64,28 @@ export let examples = {
 
   '3' : '=solo t60 o-1 4 %3 cdef   cde%  f g',
 
-  'maybe next time' : '=solo t60 o0 4 p p e. 8 a 4 +d 2 c 8 -h +c - 4 h 2 a 8 e a 4 +d 2 c 8 -h +c 16 -h +c 8 -h 2 ^h 8 %3 g +c e %' +
+  'maybe next time' : '=solo t60 o1 4 p p e. 8 a ' +
+  ' 4 +d 2 c 8 -h +c - 4 h 2 a 8 e a 4 +d 2 c 8 -h +c 16 -h +c 8 -h 2 ^h 8 %3 g +c e %' +
   '4 f 2 e 8 -g +c 4 e 2 d 8 ed d c 2 c 4 -h 2 a 8 ^a 8 p a +c' +
-  '4 d %3 8 ^d d e% 4 f 16 p 8 g 16 f 8f 4 e. 8 ^e. 16 e 8 %3 a h +c % '
+  '4 d %3 8 ^d d e% 4 f 16 p 8 g 16 f 8f 4 e. 8 ^e. 16 e 8 %3 a h +c % 2 -h. 8 +c-h 4 h 2a 8 -e a' +
+  '  * B  *' +
+  '4 +d 2 c 8 -h +c - 4 h 2 a 8 e a 4 +d 2 c 8 -h +c 16 -h +c 8 -h 2 ^h 8 g 16 +c e' +
+  '%3 8 fefefe % 4 f e %3 8 eee % 16 e 8d 16e 4 d 16 ^d 8 e. 4 ^e 8 d 16cc 4 ^c 16 ^c c de 4 f %3 8 ^f f g%  4 a 8 a+c' +
+  ' 4 d 8d 16 cd 4 d. 16 dd 8d 16cc 8c -h h. 16e a -h +h -h 8 ++c - 4 h. 8 ^h h + c- h 4 h  2a. ' +
+      '  *  PART 2 *   '+
+  ' o0 2 d. 8 d e 2 f. 8 f g 2 a %3 4 a +c# d % 8 d. 32 c# d 2 c# 8 c#d' +
+  ' - 2 d. 8 d e 2 f. 8 g +a + %3 c# d c# d c#d % 2 c# 1 -a ' +
+  ' 8 - hb a g e d c# d e g a 4 g 2 _d f#_ + 4c 8 -a f# e d# e f# 4 h. 8 a 2 g#' +
+  '2 _h +d f_ 4 _h +d f_ _a +c e_ 1 _g# h +d_ 2 f 4 f e 2 dc - 1 e 2 ^e p' +
+  ' @' +
+  ' *CHORD*  ' +
+  '=chord o0 t60 1 p ' +
+  '2 _a +c e_ _g a +c e_ _f a +c e_ _e a +c e_ _d f a_ _c d f a_ _g h d_ _g h d_' +
+  '_c e g _ _c e g_ _e g# h +d _ _e g# h +d _ _a +c e_ _g a +c e_ _f a +c e_ _f a +d_' +
+  '_d f a_ _d f a_ _a +c e_ _a +c e_ _g h d_ _g h d_ _a +c e_ _e g# h +d _' +
+  ' *  PART 2 * ' +
+  ' _a +c e_ _g a +c e_ _f a +c e_ _e a +c e_ _d f a_ _c d f a_ _g h d_ _g h d_' +
+      '_c e g _ _c e g_ _e g# h +d _ _e g# h +d _ _a +c e_ _g a +c e_ _f a +c e_ _f a +d_' +
+  '_d f a_ _d f a_ _a +c e_ _a +c e_ _g h d_ _c e g_ _a +c e_ _a +c e g -c#_'
 
 };
