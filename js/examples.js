@@ -73,19 +73,25 @@ export let examples = {
   '%3 8 fefefe % 4 f e %3 8 eee % 16 e 8d 16e 4 d 16 ^d 8 e. 4 ^e 8 d 16cc 4 ^c 16 ^c c de 4 f %3 8 ^f f g%  4 a 8 a+c' +
   ' 4 d 8d 16 cd 4 d. 16 dd 8d 16cc 8c -h h. 16e a -h +h -h 8 ++c - 4 h. 8 ^h h + c- h 4 h  2a. ' +
       '  *  PART 2 *   '+
-  ' o0 2 d. 8 d e 2 f. 8 f g 2 a %3 4 a +c# d % 8 d. 32 c# d 2 c# 8 c#d' +
+  ' t60 o0 2 d. 8 d e 2 f. 8 f g 2 a %3 4 a +c# d % 8 d. 32 c# d 2 c# 8 c#d' +
   ' - 2 d. 8 d e 2 f. 8 g +a + %3 c# d c# d c#d % 2 c# 1 -a ' +
   ' 8 - hb a g e d c# d e g a 4 g 2 _d f#_ + 4c 8 -a f# e d# e f# 4 h. 8 a 2 g#' +
-  '2 _h +d f_ 4 _h +d f_ _a +c e_ 1 _g# h +d_ 2 f 4 f e 2 dc - 1 e 2 ^e p' +
+  '2 _h +d f_ 4 _h +d f_ _a +c e_ 1 _g# h +d_ 2 f 4 f e 2 dc - 1 e 2 ^e ' +
+  '      *PART 3*     ' +
+  ' t60 o1 8 p e a +d 2 d c 8 -g 4 p 8 e a +c d c d. 16 c 2 d. 8 -g 4 p 16 e a 8 +d 16 dc dc -a +c' +
+  ' 32 c -h 16 a h 32 +c -h 16 a +c dc -a + cd d# e a' +
   ' @' +
   ' *CHORD*  ' +
   '=chord o0 t60 1 p ' +
   '2 _a +c e_ _g a +c e_ _f a +c e_ _e a +c e_ _d f a_ _c d f a_ _g h d_ _g h d_' +
   '_c e g _ _c e g_ _e g# h +d _ _e g# h +d _ _a +c e_ _g a +c e_ _f a +c e_ _f a +d_' +
   '_d f a_ _d f a_ _a +c e_ _a +c e_ _g h d_ _g h d_ _a +c e_ _e g# h +d _' +
-  ' *  PART 2 * ' +
+  ' *  B * ' +
   ' _a +c e_ _g a +c e_ _f a +c e_ _e a +c e_ _d f a_ _c d f a_ _g h d_ _g h d_' +
       '_c e g _ _c e g_ _e g# h +d _ _e g# h +d _ _a +c e_ _g a +c e_ _f a +c e_ _f a +d_' +
-  '_d f a_ _d f a_ _a +c e_ _a +c e_ _g h d_ _c e g_ _a +c e_ _a +c e g -c#_'
+  '_d f a_ _d f a_ _a +c e_ _a +c e_ _g h d_ _c e g_ _a +c e_ _a +c e g -c#_',
+
+  'test':  ' =solo t60 o1 2 p t120  8 p e a +d 2 d c 8  - p 4 p 8 e a +c d c d. 16 c 2 d. 8  - p 4 p 16 e a 8 +d 16 dc dc -a +c' +
+  ' 32 c -h 16 a h 32 +c -h 16 a +c dc -a + cd d# e a 4 a 16 ^a a h a %3 +c -h a +c -h a g f# e g f# e % eb d c d 2 d 8 d d %3 d d d% 2 ^d 8 p c dd'
 
 };

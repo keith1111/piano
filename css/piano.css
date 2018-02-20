@@ -1,3 +1,6 @@
+@font-face {
+  font-family: "Drive-Thru";
+  src: url("../fonts/Drive-ThruNF.ttf"); }
 html, body, div, span, applet, object, iframe,
 h1, h2, h3, h4, h5, h6, p, blockquote, pre,
 a, abbr, acronym, address, big, cite, code,
@@ -40,5 +43,101 @@ q:before, q:after {
 table {
   border-collapse: collapse;
   border-spacing: 0; }
+
+body {
+  padding-top: 100px;
+  user-select: none; }
+
+.piano {
+  width: 70vw;
+  height: 36.857142vw;
+  margin-left: 15vw; }
+
+.hull rect {
+  fill: #27274f; }
+.hull .logo {
+  fill: #dfdfdd;
+  font-family: Drive-Thru, cursive;
+  font-size: 1.5rem; }
+
+.board {
+  transition: .6s; }
+  .board svg {
+    width: 245vw;
+    height: 26.857142vw; }
+
+.piano-key {
+  stroke: #000000;
+  stroke-width: 2px; }
+  .piano-key .base {
+    fill: #efefef; }
+  .piano-key .adjacent {
+    fill: #101010; }
+  .piano-key .next-pressed, .piano-key .prev-pressed {
+    fill: transparent;
+    stroke: transparent;
+    pointer-events: none; }
+  .piano-key[data-is-pressed=true] polygon, .piano-key[data-is-pressed=true] text {
+    transform: translate(2px, 2px); }
+  .piano-key[data-is-pressed=true] + .piano-key .next-pressed {
+    fill: #101010;
+    stroke: #101010; }
+  .piano-key[data-is-pressed=true] + .piano-key .prev-pressed {
+    fill: #efefef;
+    stroke: #efefef; }
+
+.octave text {
+  text-anchor: middle;
+  font-size: 24px;
+  font-family: 'Cutive Mono', monospace; }
+
+.octave .adjacent + text {
+  fill: #dfdfdf;
+  stroke: #dfdfdf; }
+
+.metronome .area {
+  stroke: #dfdfdd; }
+.metronome .label {
+  text-anchor: middle;
+  stroke: #dfdfdd; }
+.metronome .display {
+  stroke: #dfdfdd;
+  fill: #011306; }
+.metronome .tempo {
+  stroke: #40775f;
+  display: none;
+  font-size: 1.5rem;
+  text-anchor: middle; }
+  .metronome .tempo.on {
+    display: block; }
+.metronome .power {
+  stroke: #eae3db;
+  fill: #4c0000;
+  transition: 1s; }
+  .metronome .power.on {
+    stroke: #011306;
+    fill: #920c06; }
+
+.metronome-controls {
+  position: absolute;
+  right: 18vw;
+  width: 8vw;
+  top: calc(100px + 6.5vw); }
+  .metronome-controls.volume {
+    right: 15vw;
+    width: 4.5vw;
+    top: calc(100px + 4vw);
+    transform: rotate(-90deg); }
+
+.examples {
+  position: absolute;
+  width: 10vw;
+  height: 2vw;
+  top: calc(100px + 1vw);
+  left: 40vw; }
+
+.player .start {
+  stroke: #000000;
+  fill: #16590e; }
 
 /*# sourceMappingURL=piano.css.map */

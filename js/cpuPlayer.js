@@ -59,8 +59,11 @@ function playCommands(sequence) {
 
 
     let stdInnerTemp = outerTemp;
+    let stdTempSet = false;
     let currentInnerTemp;
     let currentSpeed = 1;
+
+
 
     let keyEnd = {};
     let notesCount = 0;
@@ -73,6 +76,8 @@ function playCommands(sequence) {
 
       }
     });
+
+    console.log(timings);
 
     let breakPoints = [0];    // tacts in each tempo
     let breakTime = [0];      // seconds when change tempo
@@ -87,8 +92,9 @@ function playCommands(sequence) {
         /* tempo change */
         if (commands[i].startsWith('t')) {
           let newInnerTemp = parseInt(commands[i].slice(1));
-          if(!notesCount){
+          if(!stdTempSet){
             stdInnerTemp = newInnerTemp;
+            stdTempSet = true;
           }
           if(timings[i].start > SILENCE_INTRO_TICKS){
             let prevTempoSeconds = (timings[i].start - breakPoints[breakPoints.length-1])*q[tempoZone];
@@ -192,6 +198,9 @@ function playCommands(sequence) {
     let lastNote = Math.floor(timings[timings.length-1].end);
 
     breakPoints.push(lastNote);
+    console.log(breakPoints);
+    console.log(breakTime);
+    console.log(q);
 
     if(ch == 0 ){
       for(let tzone=0; tzone<breakPoints.length ;tzone++){
